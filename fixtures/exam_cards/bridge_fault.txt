@@ -1,0 +1,6 @@
+/desk · pulse #3
+Desk rule · bridge heartbeat check
+EXEC_BRIDGE_TIMEOUT · last heartbeat 90s ago
+Phase: HALTED · health: FAULT
+Real fault: execution bridge heartbeat missed on dry desk
+Recommended: ack alert · verify bridge process · restart mock lane

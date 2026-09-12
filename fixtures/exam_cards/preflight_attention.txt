@@ -1,0 +1,5 @@
+/desk · pulse #4
+Pre-flight checklist complete · all green on dry run
+Phase: CLEAR · ready: true · still dry_run: true
+Liquidity good · spread 3.1 bps · open_window
+Operator review window — mock desk only · never auto-arm live

@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#0a0f1a" />
+  <title>Morning Light Desk MCP — Alexa+ Sim</title>
+  <style>
+    :root {
+      font-family: system-ui, -apple-system, Segoe UI, sans-serif;
+      color: #e8eefc;
+      background: #0a0f1a;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: radial-gradient(ellipse at top, #152038 0%, #0a0f1a 55%);
+      padding: 1.25rem 1rem 2.5rem;
+      max-width: 720px;
+      margin-inline: auto;
+    }
+    .owner { text-align: center; font-size: 1.4rem; margin: 0; letter-spacing: .08em; }
+    h1 { text-align: center; margin: .35rem 0 0; font-size: clamp(1.4rem, 5vw, 1.85rem); letter-spacing: .06em; }
+    .tag { text-align: center; color: #8b97b3; margin: .35rem 0 1.25rem; font-size: .9rem; line-height: 1.4; }
+    .panel {
+      background: #121826;
+      border: 1px solid #243049;
+      border-radius: 14px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+    }
+    label { display: block; color: #8b97b3; font-size: .82rem; margin-bottom: .35rem; }
+    textarea {
+      width: 100%;
+      min-height: 140px;
+      background: #0b1220;
+      color: #e8eefc;
+      border: 1px solid #243049;
+      border-radius: 10px;
+      padding: .75rem;
+      font-family: ui-monospace, Menlo, Consolas, monospace;
+      font-size: .82rem;
+      line-height: 1.45;
+      resize: vertical;
+    }
+    .samples { display: flex; flex-wrap: wrap; gap: .5rem; margin: .75rem 0; }
+    .samples button {
+      background: #1a2438;
+      color: #7dd3fc;
+      border: 1px solid #243049;
+      border-radius: 999px;
+      padding: .35rem .75rem;
+      font-size: .78rem;
+      cursor: pointer;
+    }
+    .samples button:hover { border-color: #7dd3fc; }
+    .actions { display: flex; gap: .75rem; flex-wrap: wrap; align-items: center; }
+    .primary {
+      background: linear-gradient(135deg, #1d4ed8, #2563eb);
+      color: #fff;
+      border: 0;
+      border-radius: 10px;
+      padding: .65rem 1.1rem;
+      font-weight: 700;
+      cursor: pointer;
+      letter-spacing: .04em;
+    }
+    .primary:active { transform: scale(.98); }
+    .status { color: #8b97b3; font-size: .85rem; min-height: 1.2em; }
+    .report {
+      white-space: pre-wrap;
+      font-family: ui-monospace, Menlo, Consolas, monospace;
+      font-size: .82rem;
+      line-height: 1.5;
+      background: #0b1220;
+      border-radius: 10px;
+      padding: .9rem 1rem;
+      border: 1px solid #243049;
+      animation: fade .25s ease;
+    }
+    .fields { display: grid; gap: .5rem; margin-top: .75rem; }
+    .field {
+      display: grid;
+      grid-template-columns: 7.5rem 1fr;
+      gap: .5rem;
+      font-size: .82rem;
+      align-items: start;
+    }
+    .field dt { color: #7dd3fc; font-weight: 600; }
+    .field dd { margin: 0; color: #cbd5e1; }
+    .alexa-bar {
+      display: flex;
+      align-items: center;
+      gap: .75rem;
+      padding: .75rem 1rem;
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 999px;
+      margin-bottom: 1rem;
+    }
+    .pulse {
+      width: 12px; height: 12px; border-radius: 50%;
+      background: #22c55e;
+      box-shadow: 0 0 12px #22c55e;
+      animation: pulse 1.6s infinite;
+    }
+    .pulse.busy { background: #f59e0b; box-shadow: 0 0 12px #f59e0b; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.35} }
+    @keyframes fade { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:none} }
+    footer { text-align: center; color: #8b97b3; font-size: .78rem; margin-top: 2rem; }
+    .bot { font-size: 1.2rem; margin-top: .4rem; }
+    .warn { color: #fb7185; font-size: .78rem; margin-top: .5rem; }
+  </style>
+</head>
+<body>
+  <p class="owner">✝️🧿🪬</p>
+  <h1>Morning Light Desk MCP</h1>
+  <p class="tag">Alexa+ simulated experience · Streamable HTTP MCP · dry desk eyes only · no live trading</p>
+
+  <div class="alexa-bar" aria-live="polite">
+    <span class="pulse" id="pulse"></span>
+    <span id="alexaLine">Alexa+, ask Morning Light to analyze my desk pulse.</span>
+  </div>
+
+  <section class="panel">
+    <label for="card">Exam / card text (dry desk pulse)</label>
+    <textarea id="card" spellcheck="false" placeholder="Paste or pick a sample exam card…"></textarea>
+    <div class="samples" id="samples"></div>
+    <div class="actions">
+      <button type="button" class="primary" id="analyze">Analyze with Desk MCP</button>
+      <span class="status" id="status">Ready — offline rules work without API keys.</span>
+    </div>
+    <p class="warn">Recommendations are HOLD / 👀 eyes only. This demo never arms live trading.</p>
+  </section>
+
+  <section class="panel" id="outPanel" hidden>
+    <div class="report" id="report"></div>
+    <dl class="fields" id="fields"></dl>
+  </section>
+
+  <footer>
+    <p>Amazon Developer Hackathon · Alexa+ track · Open Source mini-challenge</p>
+    <p>MCP endpoint: <code>/mcp</code> · REST helper: <code>/api/analyze</code></p>
+    <p class="bot">3️⃣🧿5️⃣</p>
+  </footer>
+
+  <script>
+    const SAMPLES = {
+      "SAFE HOLD": "/static/../fixtures/exam_cards/safe_hold_dry.txt",
+      "SHORT regime": "/static/../fixtures/exam_cards/short_market.txt",
+      "Bridge fault": "/static/../fixtures/exam_cards/bridge_fault.txt",
+      "Pre-flight": "/static/../fixtures/exam_cards/preflight_attention.txt",
+    };
+
+    const FALLBACK = {
+      "SAFE HOLD": `/desk · pulse #1\nKEEP dry\n👀 SAFE HOLD · math short of gate\nPhase: SAFE_HOLD · dry_run: true\nNo anomalies · holding pattern · no live orders`,
+      "SHORT regime": `/desk · pulse #2\n350 dry · USDC-SOL tape 40–250\n👀 SHORT · flash MarginFi sim only\nPhase: ACTIVE · market_regime: SHORT\nStance confirmation needed — dry sim only`,
+      "Bridge fault": `/desk · pulse #3\nEXEC_BRIDGE_TIMEOUT · last heartbeat 90s ago\nPhase: HALTED · health: FAULT\nReal fault: execution bridge heartbeat missed on dry desk`,
+      "Pre-flight": `/desk · pulse #4\nPre-flight checklist complete · all green on dry run\nPhase: CLEAR · ready: true · still dry_run: true\nOperator review window — mock desk only`,
+    };
+
+    const card = document.getElementById("card");
+    const status = document.getElementById("status");
+    const report = document.getElementById("report");
+    const fields = document.getElementById("fields");
+    const outPanel = document.getElementById("outPanel");
+    const pulse = document.getElementById("pulse");
+    const alexaLine = document.getElementById("alexaLine");
+    const samplesEl = document.getElementById("samples");
+
+    Object.keys(FALLBACK).forEach(name => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.textContent = name;
+      btn.onclick = () => { card.value = FALLBACK[name]; status.textContent = `Loaded sample: ${name}`; };
+      samplesEl.appendChild(btn);
+    });
+
+    async function analyze() {
+      const text = card.value.trim();
+      if (!text) {
+        status.textContent = "Paste exam card text first.";
+        return;
+      }
+      pulse.classList.add("busy");
+      alexaLine.textContent = "Alexa+, analyzing your desk pulse with Morning Light MCP…";
+      status.textContent = "Calling /api/analyze …";
+      try {
+        const res = await fetch("/api/analyze", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ exam_card: text }),
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        report.textContent = data.report || "";
+        fields.innerHTML = [
+          ["Test result", data.test_result],
+          ["Signal", data.signal],
+          ["Problem", data.problem],
+          ["Needs", data.needs],
+          ["Alarms", data.alarms],
+          ["Recommend", data.recommend],
+          ["Engine", data.engine],
+        ].map(([k, v]) => `<div class="field"><dt>${k}</dt><dd>${escapeHtml(v || "—")}</dd></div>`).join("");
+        outPanel.hidden = false;
+        status.textContent = `Done · engine: ${data.engine}`;
+        alexaLine.textContent = "Alexa+, here is your desk analysis. Recommendations are eyes-only HOLD.";
+      } catch (err) {
+        status.textContent = `Error: ${err.message}. Is the server running?`;
+        alexaLine.textContent = "Alexa+, I could not reach the Desk MCP server.";
+      } finally {
+        pulse.classList.remove("busy");
+      }
+    }
+
+    function escapeHtml(s) {
+      return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+    }
+
+    document.getElementById("analyze").onclick = analyze;
+    card.value = FALLBACK["SAFE HOLD"];
+  </script>
+</body>
+</html>

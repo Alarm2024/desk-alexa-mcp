@@ -1,0 +1,7 @@
+/desk · pulse #2
+350 dry · USDC-SOL tape 40–250
+net under worst-bound
+👀 SHORT · flash MarginFi sim only
+Phase: ACTIVE · market_regime: SHORT
+Bearish breadth -0.62 · liquidity thinning · spread 7.8 bps
+Stance confirmation needed — dry sim only · no live send
