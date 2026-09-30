@@ -73,7 +73,7 @@ const PATTERNS: Pattern[] = [
     next_steps: [
       "Do not approve an unlimited amount for a program you did not open yourself.",
       "If it is already signed, revoke that approval inside the wallet you installed yourself.",
-      "Paste only the public signature into explain_transaction if you want the chain read.",
+      "Paste the public signature into explain_transaction if you want the chain read.",
     ],
   },
   {
@@ -99,7 +99,7 @@ const PATTERNS: Pattern[] = [
     next_steps: [
       "Do not open the link.",
       "Do not connect a wallet and do not enter recovery words.",
-      "Check the account only by opening the official app yourself.",
+      "Check the account by opening the official app yourself.",
     ],
   },
 ];

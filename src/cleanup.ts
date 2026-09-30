@@ -34,7 +34,7 @@ const PLANS: Record<CleanupTarget, string[]> = {
     "Open the wallet app from the icon you installed. Do not use a link from a chat.",
     "In that app, remove connected sites and sessions you do not recognize.",
     "Revoke token approvals you do not recognize. Do that inside the wallet, or on a revoke page whose address you typed yourself.",
-    "If you signed an unlimited approval or a SetAuthority you did not mean, treat that account as exposed. Create a new wallet on a device you trust and move only what you still control.",
+    "If you signed an unlimited approval or a SetAuthority you did not mean, treat that account as exposed. Create a new wallet on a device you trust and move what you still control.",
     "Never type a seed phrase into a chat, a web form, or this server. No screen share and no helper on the call.",
   ],
 };

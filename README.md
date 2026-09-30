@@ -30,13 +30,13 @@ A description of a scam ("they asked for my seed", "urgent link to verify your w
 
 ## Limits
 
-- Read-only. No wallet connection, no signing, no device changes.
-- Solana signatures only. The decoder is the Iris 35 Solana decoder.
+- read-only. No wallet connection, no signing, no device changes.
+- Solana signatures. The decoder is the Iris 35 Solana decoder.
 - The RPC default is the public endpoint `https://api.mainnet-beta.solana.com`. Set `SOLANA_RPC_URL` to another public endpoint if you need to. Never commit a key or a private URL.
 - `check_scam` is six fixed string rules. A `no_pattern` verdict is not a clearance.
 - A class of QUIET / OPEN PATHS / ACT NOW describes the decoded instructions. It is not a clearance to sign.
 - Clean-up steps are instructions for you. The server cannot tap the phone or open the wallet.
-- Nothing is written to disk about a request. Process memory holds a request only while that request is handled.
+- Nothing is written to disk about a request. Process memory holds a request while that request is handled.
 
 ## Run
 
@@ -51,7 +51,7 @@ Listens on `0.0.0.0:$PORT` (default port `3000`).
 | URL | Purpose |
 | --- | --- |
 | `http://127.0.0.1:3000/mcp` | Streamable HTTP MCP |
-| `http://127.0.0.1:3000/health` | Status only. No user data. |
+| `http://127.0.0.1:3000/health` | Status. No user data. |
 
 Host header must be `localhost`, `127.0.0.1`, `[::1]`, or a name in `ALLOWED_HOSTS`. Requests with no `Origin` are allowed so non-browser clients can connect. A browser `Origin` must use one of those hostnames.
 

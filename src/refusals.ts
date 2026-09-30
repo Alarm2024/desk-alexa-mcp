@@ -21,10 +21,10 @@ export interface Refusal {
 }
 
 const SEED_WARNING =
-  "Refused. That input looks like a 12- or 24-word seed phrase. It was not sent anywhere, not stored, and not logged. Wipe it from this chat. Anyone who asked you to type those words is trying to take the wallet. Write a seed only on the wallet's own device.";
+  "Refused. That input looks like a 12- or 24-word seed phrase. It was not sent anywhere, not stored, and not logged. Wipe it from this chat. Anyone who asked you to type those words is trying to take the wallet. Write a seed on the wallet's own device.";
 
 const PRICE_WARNING =
-  "Refused. This server does not give price or trading advice. It only explains a public Solana transaction, matches six fixed scam patterns, and lists clean-up steps you do yourself.";
+  "Refused. This server does not give price or trading advice. It explains a public Solana transaction, matches six fixed scam patterns, and lists clean-up steps you do yourself.";
 
 const WALLET_WARNING =
   "Refused. This server cannot connect a wallet, sign, or approve. Do not connect a wallet because a message told you to.";
