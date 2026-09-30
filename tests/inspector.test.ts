@@ -88,9 +88,37 @@ describe("MCP Inspector connection", () => {
 
       const listed = await runInspector([url, "--transport", "http", "--method", "tools/list"]);
       assert.equal(listed.code, 0, listed.stderr || listed.stdout);
-      for (const name of ["explain_transaction", "check_scam", "clean_up_steps"]) {
+      for (const name of ["explain_transaction", "check_scam", "check_link", "safety_tip", "clean_up_steps"]) {
         assert.match(listed.stdout, new RegExp(name));
       }
+
+      const link = await runInspector([
+        url,
+        "--transport",
+        "http",
+        "--method",
+        "tools/call",
+        "--tool-name",
+        "check_link",
+        "--tool-arg",
+        "url=https://phantom-wallet-support.com/login",
+      ]);
+      assert.equal(link.code, 0, link.stderr || link.stdout);
+      assert.match(link.stdout, /lookalike_domain/);
+
+      const tip = await runInspector([
+        url,
+        "--transport",
+        "http",
+        "--method",
+        "tools/call",
+        "--tool-name",
+        "safety_tip",
+        "--tool-arg",
+        "topic=links",
+      ]);
+      assert.equal(tip.code, 0, tip.stderr || tip.stdout);
+      assert.match(tip.stdout, /short link/);
 
       const scam = await runInspector([
         url,
