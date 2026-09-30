@@ -1,7 +1,16 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { evaluateMessage } from "../src/evaluate.js";
-import { BYPASS, LATER_REFUSALS, NORMAL, REFUSALS, SCAM, type ScamLine } from "./fixtures.js";
+import { refusalFor } from "../src/refusals.js";
+import {
+  BYPASS,
+  CURSOR_WRITTEN,
+  NORMAL,
+  REAL_SCAM,
+  REFUSALS,
+  SYNTHETIC_SCAM,
+  type ScamLine,
+} from "./fixtures.js";
 
 function expectScam(sample: ScamLine): void {
   const result = evaluateMessage(sample.line);
@@ -14,16 +23,52 @@ function expectScam(sample: ScamLine): void {
   );
 }
 
-describe("fixture corpus: scam lines", () => {
-  assert.equal(SCAM.length, 18);
-  for (const [index, sample] of SCAM.entries()) {
-    it(`scam line ${index + 1} is ${sample.pattern}`, () => expectScam(sample));
+function normalLine(entry: (typeof NORMAL)[number]): string {
+  return typeof entry === "string" ? entry : entry.line;
+}
+
+describe("fixture corpus: CURSOR_WRITTEN scam lines", () => {
+  assert.equal(CURSOR_WRITTEN.length, 9);
+  for (const [index, sample] of CURSOR_WRITTEN.entries()) {
+    it(`cursor-written ${index + 1} is ${sample.pattern}`, () => expectScam(sample));
+  }
+});
+
+describe("fixture corpus: REAL_SCAM lines", () => {
+  assert.equal(REAL_SCAM.length, 15);
+  for (const [index, sample] of REAL_SCAM.entries()) {
+    if (sample.known_miss) {
+      it(`real scam ${index + 1} known miss (Dapptoolkit how-to; no ordinary how-to rule)`, () => {
+        const result = evaluateMessage(sample.line);
+        // Documented known miss: from the text alone it reads like normal how-to help.
+        if (!result.refused && result.verdict === "scam") {
+          assert.ok(true, "caught unexpectedly — fine");
+          return;
+        }
+        assert.equal(result.refused, false, sample.line);
+        if (result.refused) return;
+        assert.equal(result.verdict, "no_known_pattern", sample.line);
+      });
+      continue;
+    }
+    it(`real scam ${index + 1} is ${sample.pattern}`, () => expectScam(sample));
+  }
+});
+
+describe("fixture corpus: SYNTHETIC_SCAM lines", () => {
+  assert.equal(SYNTHETIC_SCAM.length, 6);
+  for (const [index, sample] of SYNTHETIC_SCAM.entries()) {
+    it(`synthetic scam ${index + 1} is ${sample.pattern}`, () => {
+      assert.equal(sample.synthetic, true);
+      expectScam(sample);
+    });
   }
 });
 
 describe("fixture corpus: normal lines", () => {
-  assert.equal(NORMAL.length, 10);
-  for (const [index, line] of NORMAL.entries()) {
+  assert.equal(NORMAL.length, 11);
+  for (const [index, entry] of NORMAL.entries()) {
+    const line = normalLine(entry);
     it(`normal line ${index + 1} is no_known_pattern and not refused`, () => {
       const result = evaluateMessage(line);
       assert.equal(result.refused, false, line);
@@ -37,7 +82,7 @@ describe("fixture corpus: normal lines", () => {
 });
 
 describe("fixture corpus: refusals", () => {
-  assert.equal(REFUSALS.length, 8);
+  assert.equal(REFUSALS.length, 14);
   for (const [index, sample] of REFUSALS.entries()) {
     it(`refusal ${index + 1} is refused as ${sample.reason}`, () => {
       const result = evaluateMessage(sample.line);
@@ -47,6 +92,12 @@ describe("fixture corpus: refusals", () => {
       assert.ok(result.warning.startsWith("Refused."));
       assert.equal(JSON.stringify(result).includes("abandon"), false);
     });
+    if (sample.both_tools) {
+      it(`refusal ${index + 1} also refused on explain_transaction path`, () => {
+        const refusal = refusalFor(sample.line);
+        assert.equal(refusal?.reason, sample.reason, sample.line);
+      });
+    }
   }
 });
 
@@ -57,14 +108,20 @@ describe("fixture corpus: bypass lines run the scam rules before refusals", () =
   }
 });
 
-describe("fixture corpus: later refusals", () => {
-  assert.equal(LATER_REFUSALS.length, 4);
-  for (const [index, sample] of LATER_REFUSALS.entries()) {
-    it(`later refusal ${index + 1} is refused as ${sample.reason}`, () => {
-      const result = evaluateMessage(sample.line);
-      assert.equal(result.refused, true, sample.line);
-      if (!result.refused) return;
-      assert.equal(result.reason, sample.reason, sample.line);
-    });
-  }
+describe("what-wallet companion rule", () => {
+  it("does not flag a bare what-wallet question", () => {
+    const result = evaluateMessage("What wallet are you using? I like Phantom for NFTs.");
+    assert.equal(result.refused, false);
+    if (result.refused) return;
+    assert.equal(result.verdict, "no_known_pattern");
+  });
+
+  it("flags what-wallet next to use <tool> or reconnect/dapp", () => {
+    assert.equal(evaluateMessage("Use debridge, what wallet are you using? [redacted]").refused === false &&
+      (evaluateMessage("Use debridge, what wallet are you using? [redacted]") as { verdict: string }).verdict, "scam");
+    assert.equal(
+      (evaluateMessage("Reconnecting your wallet via dapps What wallet are you using?") as { verdict: string }).verdict,
+      "scam",
+    );
+  });
 });

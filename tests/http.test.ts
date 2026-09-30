@@ -273,11 +273,11 @@ describe("/mcp hardening", () => {
     assert.match(reply.body, /Not found\./);
   });
 
-  it("serves the simulated Alexa+ page same-origin at /sim", async () => {
+  it("serves the simulated page same-origin at /sim", async () => {
     const reply = await send(port, { path: "/sim", method: "GET" });
     assert.equal(reply.status, 200);
     assert.match(String(reply.headers["content-type"]), /text\/html/);
-    assert.match(reply.body, /simulated Alexa\+ page/);
+    assert.match(reply.body, /iris-alexa — simulated page/);
     assert.match(reply.body, /fetch\("\/mcp"/);
   });
 

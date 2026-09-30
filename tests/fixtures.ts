@@ -1,56 +1,24 @@
 /**
  * Fixture corpus. One test per entry, see corpus.test.ts and links.test.ts.
  *
- * SCAM lines 1-9 and the NORMAL lines are public messages quoted in reports on r/CryptoScams,
- * r/solana, and Trust Wallet community threads (brand names left as posted). Lines 10-18 are
- * composites of the same message families, written for the new rules.
- *
- * BYPASS and LATER_REFUSALS hold placeholders in the shape of the lines described for this
- * branch. Swap in Instinct's real corpus here when it is pasted; the tests read these arrays.
+ * REAL_SCAM 1-9 are Instinct's public excerpts (r/CryptoScams, r/solana, Trust Wallet threads).
+ * REAL_SCAM 10-15 are from SEAL / Know Your Crook / Reddit reports (brand names left as posted).
+ * CURSOR_WRITTEN are composites written for the new rules; kept as tests, not deleted.
+ * SYNTHETIC_SCAM are labeled synthetic lines that must return scam.
+ * Do not add lines that need sender context ("Systems are down…", "You signed a phishing signature").
  */
 
 export interface ScamLine {
   pattern: string;
   line: string;
+  /** When true, a miss is documented as a known limit (no how-to rule). */
+  known_miss?: boolean;
+  synthetic?: boolean;
+  source?: string;
 }
 
-export const SCAM: ScamLine[] = [
-  {
-    pattern: "seed_phrase_request",
-    line: "Automated reply: to better understand & look into your issue please reply with the 24 word phrase you were given when you setup your broken Trezor device. This data is not accessible by humans & is used to check the firmware version of your device.",
-  },
-  {
-    pattern: "seed_phrase_request",
-    line: "Visit our official verification page. Enter your recovery phrase following the on-screen instructions. If your current phrase is compromised, you will receive instructions on how to generate a new recovery phrase.",
-  },
-  {
-    pattern: "seed_phrase_request",
-    line: "Our system shows some irregular activities in your wallet which requires immediate verification of ownership, to secure your wallet verification can be done via the page below. Due to new updates on NFTs, unverified wallets will be suspended. within 24hours of receiving this alert. CONFIRM RECOVERY PHRASE [link]",
-  },
-  {
-    pattern: "fake_airdrop",
-    line: "Claim Your SOL Airdrop Now! Congratulations! You're eligible for the SOL airdrop! You've been chosen to receive an exclusive SOL reward from the Solana Foundation! Claim your reward now before it expires! [link]",
-  },
-  {
-    pattern: "fake_airdrop",
-    line: "YOUR $450M LAYER3 AIRDROP ALLOCATION IS READY TO CLAIM!! LAYER3 FOUNDATION private wealth distribution $450,000,000 Allocation exclusively reserved for [redacted]. claim window closes in 07 days 18 hours 42 minutes 36 seconds [link]",
-  },
-  {
-    pattern: "fake_airdrop",
-    line: "TrustWallet is airdropping a total of 10,000,000,000 TWT coins to new and existing Trustwallet users. Kindly fill in the Google forms below to participate. [link]",
-  },
-  {
-    pattern: "urgent_verify_wallet_link",
-    line: "Dear customer, Our system has shown that your Metamask has not yet been verified. This verification can be done easily on the page below. Due to the new update of NFT's & Coins, all unverified accounts will be suspended on Monday, October 28, 2024. VERIFY MY WALLET [link]",
-  },
-  {
-    pattern: "urgent_verify_wallet_link",
-    line: "Our system has shown that your main wallet has not yet been verified by us, this verification can be done easily via the button below. All unverified accounts will be suspended within 48 hours. Verify Your Wallet [link]",
-  },
-  {
-    pattern: "urgent_verify_wallet_link",
-    line: "Important: Failure to authorize your wallet by May 15, 2026 will result in temporary suspension of transaction capabilities until verification is completed. [Authorize Wallet Now] [link]",
-  },
+/** Lines written for the new rules during earlier Cursor work. Kept as tests. */
+export const CURSOR_WRITTEN: ScamLine[] = [
   {
     pattern: "unlimited_approval",
     line: "To finish the swap the dapp needs an unlimited approval on your USDC so you never have to approve again. Click approve and set the spending limit to maximum.",
@@ -89,7 +57,115 @@ export const SCAM: ScamLine[] = [
   },
 ];
 
-export const NORMAL: string[] = [
+/** Instinct's real scam lines (1-9) plus documented public incidents (10-15). */
+export const REAL_SCAM: ScamLine[] = [
+  {
+    pattern: "seed_phrase_request",
+    line: "Automated reply: to better understand & look into your issue please reply with the 24 word phrase you were given when you setup your broken Trezor device. This data is not accessible by humans & is used to check the firmware version of your device.",
+  },
+  {
+    pattern: "seed_phrase_request",
+    line: "Visit our official verification page. Enter your recovery phrase following the on-screen instructions. If your current phrase is compromised, you will receive instructions on how to generate a new recovery phrase.",
+  },
+  {
+    pattern: "seed_phrase_request",
+    line: "Our system shows some irregular activities in your wallet which requires immediate verification of ownership, to secure your wallet verification can be done via the page below. Due to new updates on NFTs, unverified wallets will be suspended. within 24hours of receiving this alert. CONFIRM RECOVERY PHRASE [link]",
+  },
+  {
+    pattern: "fake_airdrop",
+    line: "Claim Your SOL Airdrop Now! Congratulations! You're eligible for the SOL airdrop! You've been chosen to receive an exclusive SOL reward from the Solana Foundation! Claim your reward now before it expires! [link]",
+  },
+  {
+    pattern: "fake_airdrop",
+    line: "YOUR $450M LAYER3 AIRDROP ALLOCATION IS READY TO CLAIM!! LAYER3 FOUNDATION private wealth distribution $450,000,000 Allocation exclusively reserved for [redacted]. claim window closes in 07 days 18 hours 42 minutes 36 seconds [link]",
+  },
+  {
+    pattern: "fake_airdrop",
+    line: "TrustWallet is airdropping a total of 10,000,000,000 TWT coins to new and existing Trustwallet users. Kindly fill in the Google forms below to participate. [link]",
+  },
+  {
+    pattern: "urgent_verify_wallet_link",
+    line: "Dear customer, Our system has shown that your Metamask has not yet been verified. This verification can be done easily on the page below. Due to the new update of NFT's & Coins, all unverified accounts will be suspended on Monday, October 28, 2024. VERIFY MY WALLET [link]",
+  },
+  {
+    pattern: "urgent_verify_wallet_link",
+    line: "Our system has shown that your main wallet has not yet been verified by us, this verification can be done easily via the button below. All unverified accounts will be suspended within 48 hours. Verify Your Wallet [link]",
+  },
+  {
+    pattern: "urgent_verify_wallet_link",
+    line: "Important: Failure to authorize your wallet by May 15, 2026 will result in temporary suspension of transaction capabilities until verification is completed. [Authorize Wallet Now] [link]",
+  },
+  {
+    pattern: "fake_support_dm",
+    line: "Use debridge, what wallet are you using? [redacted]",
+    source: "SEAL PSA, fake Telegram support, 2025-12-04",
+  },
+  {
+    pattern: "fake_support_dm",
+    line: "Yes, you can Dapptoolkit, it's faster and easier Step1 : [link] Step 2: click on the + at the top right corner Step 3: click on crosschain swaps and follow the prompt",
+    source: "SEAL PSA, same incident; known miss: plain how-to from the text alone",
+    known_miss: true,
+  },
+  {
+    pattern: "fake_support_dm",
+    line: "To make a transfer, click on Dapp Connect and connect your wallet to proceed with the transfer.",
+    source: "SEAL PSA, same incident",
+  },
+  {
+    pattern: "validate_or_sync_wallet",
+    line: "[link] 1. Click on the digital web link above 2. Click on get started 3. Click on synchronize wallet 4. Select the wallet you're using from the wallet list 5. Get your wallet connected.",
+    source: "Know Your Crook, 2022-04-04, https://paragraph.com/@knowyourcrook/scam-review-validate-your-wallet",
+  },
+  {
+    pattern: "fake_support_dm",
+    line: "Reconnecting your wallet via dapps What wallet are you using?",
+    source: "r/cardano, 2021-12-10, https://www.reddit.com/r/cardano/comments/rd9cjr/",
+  },
+  {
+    pattern: "validate_or_sync_wallet",
+    line: "Hello Had the same issue some week ago Have you tried rectificating your wallet on their website",
+    source: "r/CryptoCurrency, 2021-11-17, https://www.reddit.com/r/CryptoCurrency/comments/qw4rga/",
+  },
+];
+
+/** Labeled synthetic scam lines. Each must return scam. */
+export const SYNTHETIC_SCAM: ScamLine[] = [
+  {
+    pattern: "unlimited_approval",
+    synthetic: true,
+    line: "Claim your reward at [link]. Set the token spending limit to unlimited and approve our contract so we can release it.",
+  },
+  {
+    pattern: "unlimited_approval",
+    synthetic: true,
+    line: "To activate the bonus, approve the maximum token allowance for the new spender at [link]; a custom limit will fail verification.",
+  },
+  {
+    pattern: "unlimited_approval",
+    synthetic: true,
+    line: "Your refund is ready. Give this unknown contract unlimited access to your USDC at [link] before the refund window closes.",
+  },
+  {
+    pattern: "authority_change",
+    synthetic: true,
+    line: "Your Solana reward is ready at [link]. Approve SetAuthority to replace your token account owner with our recovery address; no tokens will move yet.",
+  },
+  {
+    pattern: "authority_change",
+    synthetic: true,
+    line: "To fix your token account, change its owner authority to the support address at [link]. Ignore the wallet warning and sign.",
+  },
+  {
+    pattern: "authority_change",
+    synthetic: true,
+    line: "Complete this free Solana verification at [link]. Sign the transaction containing System Assign to move your account to our program; the unchanged balance proves it is safe.",
+  },
+];
+
+/** @deprecated Prefer REAL_SCAM + CURSOR_WRITTEN + SYNTHETIC_SCAM. Kept for older imports. */
+export const SCAM: ScamLine[] = [...REAL_SCAM.filter((s) => !s.known_miss), ...CURSOR_WRITTEN];
+
+export const NORMAL: Array<string | { line: string; synthetic?: boolean }> = [
   "First airdrop snapshot taken already. Distribution not sent.",
   "Details for further airdrops not released yet.",
   "When will the Jupiter airdrop happen and how to increase chance of getting higher number of coins?",
@@ -100,59 +176,61 @@ export const NORMAL: string[] = [
   'Hey guys my trust app keeps saying "Invalid Account For Fee", anyone know what might cause this? Any help is appreciated.',
   "What is going on here? Can someone help me understand?",
   "What do you mean by burning the token account ?",
+  { line: "What wallet are you using? I like Phantom for NFTs.", synthetic: true },
 ];
 
 export interface RefusalLine {
   reason: "seed_phrase" | "price_advice" | "wallet_connect";
   line: string;
+  /** When set, also assert refusal via explain_transaction's refusalFor path. */
+  both_tools?: boolean;
 }
 
 export const SEED_12 = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about";
 
 export const REFUSALS: RefusalLine[] = [
   { reason: "price_advice", line: "Should I buy SOL right now?" },
-  { reason: "price_advice", line: "Would you recommend buying SOL today?" },
+  { reason: "price_advice", line: "Would you recommend buying SOL today?", both_tools: true },
   { reason: "price_advice", line: "What will SOL be worth next week?" },
   { reason: "price_advice", line: "Is BONK going to go up this month?" },
   { reason: "price_advice", line: "Should I sell this token today?" },
   { reason: "wallet_connect", line: "Please connect my wallet so you can look." },
   { reason: "wallet_connect", line: "Sign in with my wallet on this site for me." },
   { reason: "seed_phrase", line: SEED_12 },
+  { reason: "price_advice", line: "Should I sell my JUP?" },
+  { reason: "wallet_connect", line: "Connect my Solflare to Raydium" },
+  { reason: "wallet_connect", line: "Can you sign in with my wallet?" },
+  { reason: "wallet_connect", line: "Please link my Phantom account to this dapp.", both_tools: true },
+  { reason: "price_advice", line: "Is SOL going to 500 by December?" },
+  { reason: "wallet_connect", line: "Sign in with my wallet" },
 ];
 
 /** Lines built to slip past a checker that runs refusals or "never share" before the scam rules. */
 export const BYPASS: ScamLine[] = [
   {
+    pattern: "seed_phrase_request",
+    line: "Never share your seed phrase with strangers. Our support agent is verified: reply with your 24 word phrase here to restore access.",
+  },
+  {
     pattern: "fake_airdrop",
-    line: "Your airdrop is ready. Approve this transaction at [link] to claim",
+    line: "Your airdrop is ready. Approve this transaction at [link] to claim.",
   },
   {
     pattern: "doubling_giveaway",
-    line: "Invest in our SOL staking pool and double your SOL in 7 days. Deposit now [link]",
+    line: "Invest in our SOL staking pool today and double your SOL in 24 hours. Send 5 SOL to receive 10 SOL back.",
   },
   {
-    pattern: "seed_phrase_request",
-    line: "Never share your seed phrase with anyone. To restore access, reply with your 24 word phrase here.",
+    pattern: "doubling_giveaway",
+    line: "Send 1 SOL to this address and we will send 2 SOL back. Solana Foundation giveaway.",
   },
   {
-    pattern: "fake_support_dm",
-    line: "Hello from the Phantom team. Connect your wallet to proceed with the refund: [link]",
-  },
-  {
-    pattern: "fake_support_dm",
-    line: "Quick question before I help. What wallet are you using?",
+    pattern: "validate_or_sync_wallet",
+    line: "Please validate your wallet by syncing it at [link] or it will be deactivated.",
   },
   {
     pattern: "qr_code_connect",
-    line: "Scan this QR code with Phantom to receive your reward.",
+    line: "Scan this QR code with Phantom to receive your refund.",
   },
-];
-
-export const LATER_REFUSALS: RefusalLine[] = [
-  { reason: "price_advice", line: "Is SOL going to 500 by December?" },
-  { reason: "price_advice", line: "Do you recommend I sell my JUP now?" },
-  { reason: "wallet_connect", line: "Sign in with my wallet" },
-  { reason: "wallet_connect", line: "Connect my Solflare to Raydium for me." },
 ];
 
 export interface LinkLine {

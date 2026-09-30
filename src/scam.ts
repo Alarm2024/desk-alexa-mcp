@@ -69,10 +69,14 @@ function urgentVerifyWallet(text: string): boolean {
 }
 
 function validateOrSync(text: string): boolean {
-  const verb = /\b(?:validate|validation|re-?validate|sync|synchronize|synchroni[sz]ation|re-?sync|rectify|rectification|re-?activate)\b.{0,40}\bwallet/;
+  const verb =
+    /\b(?:validate|validation|re-?validate|sync|synchronize|synchroni[sz]ation|re-?sync|rectify|rectificat\w*|re-?activate|reconnect(?:ing)?|re-?connect(?:ing)?)\b.{0,48}\bwallet/;
   const threat =
-    /\b(?:deactivat\w*|suspend\w*|lock(?:ed)?|restrict\w*|disabl\w*|expir\w*|terminat\w*|lose (?:your )?(?:funds|assets|access)|within \d+\s*(?:hours?|hrs|days?)|\d+\s*hours?|immediately|node error|below|link)\b/;
-  return verb.test(text) && threat.test(text);
+    /\b(?:deactivat\w*|suspend\w*|lock(?:ed)?|restrict\w*|disabl\w*|expir\w*|terminat\w*|lose (?:your )?(?:funds|assets|access)|within \d+\s*(?:hours?|hrs|days?)|\d+\s*hours?|immediately|node error|below|link|website|dapp)\b/;
+  if (verb.test(text) && threat.test(text)) return true;
+  // "rectificating your wallet on their website" and reconnect prompts without a clock threat
+  if (/\b(?:rectificat\w*|reconnect(?:ing)?|re-?connect(?:ing)?)\b.{0,48}\bwallet/.test(text)) return true;
+  return false;
 }
 
 function qrCode(text: string): boolean {
@@ -108,6 +112,21 @@ const CONNECT_TO_PROCEED =
   /^\s*.{0,30}?\b(?:to|and|so)\s+(?:we\s+can\s+|you\s+can\s+|i\s+can\s+)?(?:proceed|continue|fix|restore|resolve|recover|unlock|verify|claim|receive|complete|confirm|rectify|sync|validate|migrate|get)\b/;
 const CONNECT_HERE = /^\s*(?:here|below|now|via|at|using|on|through|with)\b/;
 
+/** "What wallet are you using" is a scam signal only next to these companions. */
+function whatWalletAsk(text: string): boolean {
+  return /\b(?:what|which)\s+wallet\s+(?:are|do)\s+you\s+(?:use|using|have|on)\b|\bwhat wallet are you\b/.test(text);
+}
+
+function whatWalletIsScamSignal(text: string): boolean {
+  if (!whatWalletAsk(text)) return false;
+  return (
+    /\b(?:reconnect|re-?connect|sync|synchroni|rectif|validat|dapp)/.test(text) ||
+    /\[link\]/.test(text) ||
+    /\buse\s+[a-z][a-z0-9_-]{2,}\b/.test(text) ||
+    /\bsupport\b/.test(text)
+  );
+}
+
 function fakeSupport(text: string): boolean {
   if (/fake support/.test(text)) return true;
   if (
@@ -125,7 +144,9 @@ function fakeSupport(text: string): boolean {
     return true;
   }
   if (/(?:dm|dmed|telegram|whatsapp|discord|messaged|texted).{0,40}(?:support|help desk|customer service|moderator|admin)/.test(text)) return true;
-  if (/\b(?:what|which)\s+wallet\s+(?:are|do)\s+you\s+(?:use|using|have|on)\b|\bwhat wallet are you\b/.test(text)) return true;
+  if (whatWalletIsScamSignal(text)) return true;
+  // "Dapp Connect" + connect your wallet, or reconnect via dapps
+  if (/\bdapp\b/.test(text) && (/\bconnect\b.{0,40}\bwallet\b|\bwallet\b.{0,40}\bconnect\b|\breconnect/.test(text))) return true;
   for (const tail of thirdPartyConnectTails(text)) {
     if (CONNECT_TO_PROCEED.test(tail) || CONNECT_HERE.test(tail)) return true;
   }

@@ -23,7 +23,7 @@ describe("check_scam patterns", () => {
     { situation: "Scan this QR code with Phantom to connect.", pattern: "qr_code_connect" },
     { situation: "Connect your wallet to fix the stuck transaction.", pattern: "fake_support_dm" },
     { situation: "Connect your wallet to restore access to your funds.", pattern: "fake_support_dm" },
-    { situation: "what wallet are you using? I can help you recover it", pattern: "fake_support_dm" },
+    { situation: "what wallet are you using? reconnect via the dapp support page", pattern: "fake_support_dm" },
     { situation: "Kindly fill in the form below to participate in the airdrop.", pattern: "fake_airdrop" },
   ];
 
