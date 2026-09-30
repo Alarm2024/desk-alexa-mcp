@@ -224,7 +224,7 @@ describe("check_link refusals share the message refusal shape", () => {
     assert.equal(result.refused, true);
     if (!result.refused) return;
     assert.equal(result.reason, "wallet_connect");
-    assert.deepEqual(Object.keys(result).sort(), ["reason", "refused", "warning"]);
+    assert.deepEqual(Object.keys(result).sort(), ["reason", "refused", "summary", "warning"]);
   });
 
   it("refuses a sign-in with wallet request", () => {

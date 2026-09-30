@@ -1,9 +1,18 @@
-import { checkLink, type LinkReport } from "./links.js";
-import { refusalFor, seedRefusal, type Refusal } from "./refusals.js";
-import { checkScam, type ScamReport } from "./scam.js";
+import { checkLink } from "./links.js";
+import { refusalFor, seedRefusal } from "./refusals.js";
+import { checkScam } from "./scam.js";
+import {
+  summarizeLink,
+  summarizeRefusal,
+  summarizeScam,
+  type WithSummary,
+} from "./summary.js";
+import type { LinkReport } from "./links.js";
+import type { Refusal } from "./refusals.js";
+import type { ScamReport } from "./scam.js";
 
-export type MessageResult = Refusal | ScamReport;
-export type LinkResult = Refusal | LinkReport;
+export type MessageResult = WithSummary<Refusal> | WithSummary<ScamReport>;
+export type LinkResult = WithSummary<Refusal> | WithSummary<LinkReport>;
 
 /**
  * Order matters:
@@ -15,12 +24,12 @@ export type LinkResult = Refusal | LinkReport;
  */
 export function evaluateMessage(text: string): MessageResult {
   const seeded = seedRefusal(text);
-  if (seeded) return seeded;
+  if (seeded) return summarizeRefusal(seeded);
   const report = checkScam(text);
-  if (report.verdict === "scam") return report;
+  if (report.verdict === "scam") return summarizeScam(report);
   const refusal = refusalFor(text);
-  if (refusal) return refusal;
-  return report;
+  if (refusal) return summarizeRefusal(refusal);
+  return summarizeScam(report);
 }
 
 const URL_TOKENS = /(?:https?:\/\/|www\.)\S+|\b(?:[a-z0-9-]+\.)+[a-z]{2,24}(?:\/\S*)?/gi;
@@ -28,10 +37,10 @@ const URL_TOKENS = /(?:https?:\/\/|www\.)\S+|\b(?:[a-z0-9-]+\.)+[a-z]{2,24}(?:\/
 /** Same order for a link. The refusal check reads the words around the URL, not the URL itself. */
 export function evaluateLink(text: string): LinkResult {
   const seeded = seedRefusal(text);
-  if (seeded) return seeded;
+  if (seeded) return summarizeRefusal(seeded);
   const report = checkLink(text);
-  if (report.verdict === "scam" || report.verdict === "unclear") return report;
+  if (report.verdict === "scam" || report.verdict === "unclear") return summarizeLink(report);
   const refusal = refusalFor(text.replace(URL_TOKENS, " "));
-  if (refusal) return refusal;
-  return report;
+  if (refusal) return summarizeRefusal(refusal);
+  return summarizeLink(report);
 }

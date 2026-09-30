@@ -5,6 +5,12 @@ import { evaluateLink, evaluateMessage } from "./evaluate.js";
 import { explainTransaction } from "./explain.js";
 import { refusalFor } from "./refusals.js";
 import { PATTERN_IDS } from "./scam.js";
+import {
+  summarizeCleanup,
+  summarizeExplain,
+  summarizeRefusal,
+  summarizeTip,
+} from "./summary.js";
 import { isTipTopic, safetyTip, TIP_TOPICS } from "./tips.js";
 
 const SERVER_VERSION = "1.1.0";
@@ -67,8 +73,8 @@ export function createIrisServer(): McpServer {
     },
     guarded(async ({ signature }) => {
       const refusal = refusalFor(signature);
-      if (refusal) return resultFor(refusal);
-      return resultFor(await explainTransaction(signature));
+      if (refusal) return resultFor(summarizeRefusal(refusal));
+      return resultFor(summarizeExplain(await explainTransaction(signature)));
     }),
   );
 
@@ -114,7 +120,7 @@ export function createIrisServer(): McpServer {
       if (!isTipTopic(chosen)) {
         return textResult({ refused: false, message: `topic must be one of: ${TIP_TOPICS.join(", ")}.` }, true);
       }
-      return resultFor(safetyTip(chosen));
+      return resultFor(summarizeTip(safetyTip(chosen)));
     }),
   );
 
@@ -133,7 +139,7 @@ export function createIrisServer(): McpServer {
       if (!isCleanupTarget(target)) {
         return textResult({ refused: false, message: "target must be iphone, android, or wallet." }, true);
       }
-      return resultFor(cleanUpSteps(target));
+      return resultFor(summarizeCleanup(cleanUpSteps(target)));
     }),
   );
 
