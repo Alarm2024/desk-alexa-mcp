@@ -1,145 +1,78 @@
-# Morning Light Desk MCP
+# Iris for Alexa+
 
-**Amazon Developer Hackathon — Alexa+ track · Open Source mini-challenge**
+**Amazon Developer Hackathon — Alexa+ track**
 
-Streamable HTTP MCP server (spec **2025-11-25+**) that Alexa+ agents and other MCP hosts can call to analyze dry **Exam/card** pulse text from a mock trading desk.
+Self-hosted, read-only [Model Context Protocol](https://modelcontextprotocol.io) server for Alexa+ and other MCP hosts. It speaks **Streamable HTTP** with the official TypeScript SDK (`@modelcontextprotocol/server` and `@modelcontextprotocol/node`) on MCP spec **2025-11-25** or later.
+
+The server stores nothing. It does not log tool arguments.
 
 ✝️🧿🪬
 
 ## What it does
 
-| Tool | Description |
-|------|-------------|
-| `analyze_exam_card` | Dry exam/card text → structured **Test result · Signal · Problem · Needs · Alarms · Recommend** |
-| `health` | Server status, version, transport, and engine mode |
+| Tool | Input | Result |
+| --- | --- | --- |
+| `explain_transaction` | Public Solana `signature` | Programs, findings, and balance lines from `sol-decode.js` (copied from our page [Alarm2024/iris-35](https://github.com/Alarm2024/iris-35)). One `getTransaction` call to the public RPC. |
+| `check_scam` | A short `situation` | Fixed rules for six patterns: seed-phrase request, fake support DM, fake airdrop, unlimited approval, authority change, urgent "verify wallet" link. Returns `verdict`, `why`, and `next_steps`. |
+| `clean_up_steps` | `target`: `iphone`, `android`, or `wallet` | A checklist you do yourself on that device. |
 
-**Rules (honest desk):**
+`desk-alexa-mcp` already ran a working Streamable HTTP MCP server, so this branch builds Iris on that repo.
 
-- English only
-- No live trading recommendations
-- No CLEAR+/go language in **Recommend** — HOLD / 👀 eyes only
-- Offline rules engine works **without** any API key
-- Optional Nebius Token Factory enrich when `NEBIUS_API_KEY` is set
+AI-assisted analysis of public pages.
 
-3️⃣🧿5️⃣
+## What it refuses
 
-## Repository
+- **Seed phrase.** A 12- or 24-word run from the public BIP-39 English wordlist is refused, with a warning. It is not sent to the RPC, not stored, and not logged.
+- **Price or trading advice.** Questions about whether to buy, sell, or what a price is are refused.
+- **Wallet connect.** This server cannot connect a wallet, sign, or approve. A request to do that is refused.
 
-Self-contained hackathon project. Intended standalone repo: **`Alarm2024/desk-alexa-mcp`**.
+A description of a scam ("they asked for my seed", "urgent link to verify your wallet") is checked by `check_scam`. Pasting the words themselves is refused.
 
-Until that repo is published, clone from this monorepo folder:
+## Limits
+
+- Read-only. No wallet connection, no signing, no device changes.
+- Solana signatures only. The decoder is the Iris 35 Solana decoder.
+- The RPC default is the public endpoint `https://api.mainnet-beta.solana.com`. Set `SOLANA_RPC_URL` to another public endpoint if you need to. Never commit a key or a private URL.
+- `check_scam` is six fixed string rules. A `no_pattern` verdict is not a clearance.
+- A class of QUIET / OPEN PATHS / ACT NOW describes the decoded instructions. It is not a clearance to sign.
+- Clean-up steps are instructions for you. The server cannot tap the phone or open the wallet.
+- Nothing is written to disk about a request. Process memory holds a request only while that request is handled.
+
+## Run
 
 ```bash
-git clone https://github.com/Alarm2024/desk-sentinel.git
-cd desk-sentinel/desk-alexa-mcp
+npm install
+cp .env.example .env   # optional
+npm start
 ```
 
-## Quick start
-
-```bash
-# from repo root (desk-alexa-mcp/ or desk-sentinel/desk-alexa-mcp/)
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-cp .env.example .env   # optional — edit if using Nebius enrich
-python -m desk_alexa_mcp
-```
-
-Server listens on `http://0.0.0.0:8000` (override with `HOST` / `PORT`).
-
-## Endpoints
+Listens on `0.0.0.0:$PORT` (default port `3000`).
 
 | URL | Purpose |
-|-----|---------|
-| `http://localhost:8000/` | Alexa+ **web simulation** page |
-| `http://localhost:8000/sim` | Same web sim |
-| `http://localhost:8000/mcp` | **Streamable HTTP MCP** (Alexa+ / MCP clients) |
-| `http://localhost:8000/health` | Health JSON |
-| `http://localhost:8000/api/analyze` | REST helper for the web sim |
+| --- | --- |
+| `http://127.0.0.1:3000/mcp` | Streamable HTTP MCP |
+| `http://127.0.0.1:3000/health` | Status only. No user data. |
 
-## Sample curl
+Host header must be `localhost`, `127.0.0.1`, `[::1]`, or a name in `ALLOWED_HOSTS`. Requests with no `Origin` are allowed so non-browser clients can connect. A browser `Origin` must use one of those hostnames.
 
-**Health:**
+## MCP Inspector
 
 ```bash
-curl -s http://localhost:8000/health | jq
+npx mcp-inspector --cli http://127.0.0.1:3000/mcp --transport http --method tools/list
 ```
-
-**Analyze (REST — easiest for judges):**
 
 ```bash
-curl -s -X POST http://localhost:8000/api/analyze \
-  -H "Content-Type: application/json" \
-  -d '{"exam_card": "KEEP dry\n👀 SAFE HOLD · math short of gate\nPhase: SAFE_HOLD · dry_run: true"}' | jq
+npx mcp-inspector --cli http://127.0.0.1:3000/mcp --transport http \
+  --method tools/call --tool-name clean_up_steps --tool-arg target=iphone
 ```
 
-**MCP initialize (Streamable HTTP):**
+## Tests
 
 ```bash
-curl -s -X POST http://localhost:8000/mcp \
-  -H "Content-Type: application/json" \
-  -H "Accept: application/json, text/event-stream" \
-  -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-11-25","capabilities":{},"clientInfo":{"name":"demo","version":"0.1.0"}}}'
+npm test
 ```
 
-**MCP tools/list:**
-
-```bash
-curl -s -X POST http://localhost:8000/mcp \
-  -H "Content-Type: application/json" \
-  -H "Accept: application/json, text/event-stream" \
-  -d '{"jsonrpc":"2.0","id":2,"method":"tools/list","params":{}}'
-```
-
-Or run the bundled script (server must be running):
-
-```bash
-chmod +x scripts/demo.sh
-./scripts/demo.sh
-```
-
-## Alexa+ web simulation
-
-Open **http://localhost:8000/sim** in a browser. Pick a sample exam card, click **Analyze with Desk MCP**, and read the branded report — a fallback “simulated Alexa+ experience” for judges without Amazon API keys.
-
-## Fixtures
-
-Sample dry exam cards live in `fixtures/exam_cards/`:
-
-- `safe_hold_dry.txt` — routine HOLD watch
-- `short_market.txt` — SHORT regime warning
-- `bridge_fault.txt` — operational fault
-- `preflight_attention.txt` — pre-flight attention (still dry)
-
-## Optional Nebius enrich
-
-Copy `.env.example` → `.env` and set `NEBIUS_API_KEY` for NVIDIA Nemotron analysis via [Nebius Token Factory](https://nebius.com/services/token-factory). Without a key, the offline rules engine handles all analysis.
-
-**Never commit secrets.** Only `.env.example` is tracked.
-
-## Connect from MCP clients
-
-Point any Streamable HTTP MCP client at:
-
-```
-http://localhost:8000/mcp
-```
-
-Example with the official Python SDK:
-
-```python
-from mcp import ClientSession
-from mcp.client.streamable_http import streamable_http_client
-
-async with streamable_http_client("http://localhost:8000/mcp") as (read, write, _):
-    async with ClientSession(read, write) as session:
-        await session.initialize()
-        result = await session.call_tool(
-            "analyze_exam_card",
-            {"exam_card": open("fixtures/exam_cards/safe_hold_dry.txt").read()},
-        )
-        print(result)
-```
+Covers each tool, each refusal, and an MCP Inspector connection over Streamable HTTP.
 
 ## License
 
