@@ -1,6 +1,6 @@
 {
   "name": "iris-alexa-mcp",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "private": true,
   "type": "module",
   "description": "Iris for Alexa+ — read-only Streamable HTTP MCP server (spec 2025-11-25 or later).",
@@ -10,18 +10,19 @@
   "scripts": {
     "start": "tsx src/index.ts",
     "typecheck": "tsc --noEmit",
-    "test": "tsx --test tests/*.test.ts"
+    "test": "tsx --test tests/*.test.ts",
+    "check:words": "sh scripts/banned-words.sh"
   },
   "dependencies": {
     "@modelcontextprotocol/node": "^2.1.0",
     "@modelcontextprotocol/server": "^2.2.0",
+    "tsx": "^4.20.6",
     "zod": "^4.6.5"
   },
   "devDependencies": {
     "@modelcontextprotocol/client": "^2.2.0",
     "@modelcontextprotocol/inspector": "^2.8.0",
     "@types/node": "^22.19.0",
-    "tsx": "^4.20.6",
     "typescript": "^5.9.3"
   }
 }

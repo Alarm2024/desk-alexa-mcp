@@ -4,7 +4,7 @@
 
 Self-hosted, read-only [Model Context Protocol](https://modelcontextprotocol.io) server for Alexa+ and other MCP hosts. It speaks **Streamable HTTP** with the official TypeScript SDK (`@modelcontextprotocol/server` and `@modelcontextprotocol/node`) on MCP spec **2025-11-25** or later.
 
-The server stores nothing. It does not log tool arguments.
+The server stores nothing. It does not log tool arguments. It holds no private key and has no code path that signs, sends, connects, or approves anything.
 
 ✝️🧿🪬
 
@@ -13,28 +13,52 @@ The server stores nothing. It does not log tool arguments.
 | Tool | Input | Result |
 | --- | --- | --- |
 | `explain_transaction` | Public Solana `signature` | Programs, findings, and balance lines from `sol-decode.js` (copied from our page [Alarm2024/iris-35](https://github.com/Alarm2024/iris-35)). One `getTransaction` call to the public RPC. |
-| `check_scam` | A short `situation` | Fixed rules for six patterns: seed-phrase request, fake support DM, fake airdrop, unlimited approval, authority change, urgent "verify wallet" link. Returns `verdict`, `why`, and `next_steps`. |
+| `check_scam` | A `situation`: what the person said, or the message they received | Fixed rules for nine patterns: seed-phrase request, fake support DM, fake airdrop, doubling giveaway, unlimited approval, authority change (SetAuthority, System Assign), urgent "verify wallet" link, validate/sync-or-be-deactivated, QR code to scan with the wallet. Returns `verdict`, `reason`, `why`, and `next_steps`. |
+| `check_link` | A `url` or domain | Official domain, lookalike domain, punycode host, lure words in the host, or a short link it cannot see through. Never opens the link. |
+| `safety_tip` | Optional `topic` | One short reminder written to be spoken aloud. Topics: `general`, `seed_phrase`, `links`, `approvals`, `support`, `qr_codes`. |
 | `clean_up_steps` | `target`: `iphone`, `android`, or `wallet` | A checklist you do yourself on that device. |
 
-`desk-alexa-mcp` already ran a working Streamable HTTP MCP server, so this branch builds Iris on that repo.
+`check_link` and `safety_tip` were ported from [Alarm2024/iris-alexa-guard](https://github.com/Alarm2024/iris-alexa-guard). `check_scam` is this repo's name for that project's `check_message`. `desk-alexa-mcp` already ran a working Streamable HTTP MCP server, so Iris is built on that repo.
 
 AI-assisted analysis of public pages.
 
+### Order of checks
+
+1. A pasted 12- or 24-word seed phrase is refused before any rule reads it.
+2. The scam rules run on the whole text. A forwarded message that says "approve this transaction to claim your airdrop" or "invest in our staking pool and double your SOL" is a **scam**, because those words belong to the sender, not to the person asking Iris.
+3. Refusals cover what the person asks Iris to do: price or buy/sell advice, connect or sign in with a wallet, sign or approve.
+4. Otherwise the verdict is `no_known_pattern` with the text **"This is not a clearance."**
+
+"Never share your seed phrase" by itself is advice and is not flagged. The same sentence followed by "reply with your 24 word phrase here" is a scam, because the request is still there.
+
+### Link rules
+
+- Official: `phantom.com`, `phantom.app`, `solflare.com`, `backpack.app`, `jup.ag`, `raydium.io`, `solana.com`, and their subdomains. A path on an official domain (`phantom.com/learn/connect-wallet`) is official.
+- A host that carries one of those brand names anywhere else (`phantom-wallet-support.com`, `solflare-airdrop.com`, `raydium-claim.net`) is a lookalike.
+- Any `xn--` (punycode) host is a lookalike.
+- A short link (`bit.ly`, `t.co`, `tinyurl.com`, …) gets: can't see where it goes; open the official app yourself.
+- Whole TLDs are never flagged. `abc.xyz` is clean.
+- `official` and `no_known_pattern` both say who runs the page, not that a prompt on it is safe to sign.
+
 ## What it refuses
 
-- **Seed phrase.** A 12- or 24-word run from the public BIP-39 English wordlist is refused, with a warning. It is not sent to the RPC, not stored, and not logged.
-- **Price or buy/sell advice.** Questions about whether to buy, sell, or what a price is are refused.
-- **Wallet connect.** This server cannot connect a wallet, sign, or approve. A request to do that is refused.
+Every refusal has the same shape: `{ "refused": true, "reason": ..., "warning": ... }`, from every tool.
+
+| `reason` | Trigger |
+| --- | --- |
+| `seed_phrase` | A 12- or 24-word run from the public BIP-39 English wordlist. Not sent to the RPC, not stored, not logged. |
+| `price_advice` | Should I buy or sell, do you recommend, what is it worth, is it going to go up, worth next week, price target. |
+| `wallet_connect` | Connect my wallet, connect my Phantom to Jupiter, sign in with my wallet, sign this transaction, approve this transaction. |
 
 A description of a scam ("they asked for my seed", "urgent link to verify your wallet") is checked by `check_scam`. Pasting the words themselves is refused.
 
 ## Limits
 
-- Read-only. No wallet connection, no signing, no device changes.
+- Read-only. No wallet connection, no sign-in, no signing, no device changes.
 - Solana signatures. The decoder is the Iris 35 Solana decoder.
 - The RPC default is the public endpoint `https://api.mainnet-beta.solana.com`. Set `SOLANA_RPC_URL` to another public endpoint if you need to. Never commit a key or a private URL.
-- `check_scam` is six fixed string rules. A `no_pattern` verdict is not a clearance.
-- The rules read English. Other languages get no_pattern, which is not a clearance.
+- The rules read English. Other languages get `no_known_pattern`, which is not a clearance.
+- `check_scam` and `check_link` are fixed string rules. A clean result is not a clearance.
 - A class of QUIET / OPEN PATHS / ACT NOW describes the decoded instructions. It is not a clearance to sign.
 - Clean-up steps are instructions for you. The server cannot tap the phone or open the wallet.
 - Nothing is written to disk about a request. Process memory holds a request while that request is handled.
@@ -47,16 +71,39 @@ cp .env.example .env   # optional
 npm start
 ```
 
-Listens on `0.0.0.0:$PORT` (default port `3000`).
+Listens on `0.0.0.0:$PORT` (default port `3000`). `.env` is read with `process.loadEnvFile()`; Node 20.12 or newer.
 
 | URL | Purpose |
 | --- | --- |
 | `http://127.0.0.1:3000/mcp` | Streamable HTTP MCP |
 | `http://127.0.0.1:3000/health` | Status. No user data. |
 
-Host header must be `localhost`, `127.0.0.1`, `[::1]`, or a name in `ALLOWED_HOSTS`. Requests with no `Origin` are allowed so non-browser clients can connect. A browser `Origin` must use one of those hostnames.
+### What `/mcp` enforces
 
-## MCP Inspector
+| Request | Answer |
+| --- | --- |
+| `Host` not `localhost`, `127.0.0.1`, `[::1]`, or a name in `ALLOWED_HOSTS` | `403` |
+| `Origin` present and not one of those hostnames | `403`. No `Origin` passes, so non-browser clients connect. |
+| `GET` or `DELETE /mcp` | `405` with `Allow: POST` |
+| `Accept` without both `application/json` and `text/event-stream` | `406` |
+| `MCP-Protocol-Version` set to an unknown version | `400`. Absent is accepted, per spec. |
+| `Content-Type` not `application/json` | `415` |
+| Body over 64 KB, declared or streamed | `413` |
+| Body that is not JSON | `400` |
+| `notifications/initialized` | `202`, no body |
+
+Every error body is fixed text. Nothing from the request, and no exception message, is echoed back.
+
+### Self-hosting on Render
+
+`render.yaml` describes one web service on Node 22 (`npm ci`, `npm start`, health check on `/health`). `tsx` is a runtime dependency, so no build step is needed. After the first deploy, set `ALLOWED_HOSTS` to the hostname Render gave the service so the Host and Origin checks accept it.
+
+On the free plan the service sleeps after about 15 minutes without traffic. The first request after that waits while it wakes, which can be tens of seconds. That is a plan limit, not a fault in the server. Nothing in this repo deploys by itself.
+
+## Tested with
+
+- **MCP Inspector**, CLI mode, over Streamable HTTP: `tools/list` and a `tools/call` on each tool, including each refusal. This runs in `npm test`.
+- **A simulated Alexa+ page** at `http://127.0.0.1:3000/sim` (source in `sim/alexa-page.html`). It posts the same JSON-RPC calls an MCP host sends to `/mcp`, shows the text an assistant would read out, and can speak it with the browser's speech API. It is served same-origin, so the Origin check applies to it like any browser client. It is a stand-in for the Alexa+ MCP host; this repo makes no claim about Amazon's manifest or registration format, and includes none.
 
 ```bash
 npx mcp-inspector --cli http://127.0.0.1:3000/mcp --transport http --method tools/list
@@ -64,16 +111,18 @@ npx mcp-inspector --cli http://127.0.0.1:3000/mcp --transport http --method tool
 
 ```bash
 npx mcp-inspector --cli http://127.0.0.1:3000/mcp --transport http \
-  --method tools/call --tool-name clean_up_steps --tool-arg target=iphone
+  --method tools/call --tool-name check_link --tool-arg url=phantom-wallet-support.com
 ```
 
 ## Tests
 
 ```bash
 npm test
+npm run typecheck
+npm run check:words
 ```
 
-Covers each tool, each refusal, and an MCP Inspector connection over Streamable HTTP.
+Fixtures in `tests/fixtures.ts`: 18 scam lines, 10 normal lines, 8 refusals, 20 links (10 phishing, 10 official) plus clean-TLD cases, 6 bypass lines that must come out as scams, and 4 more refusals. One test per line. The HTTP suite covers each row of the `/mcp` table above. `check:words` fails when a word from the project's banned list appears in `README.md`, `src`, `tests`, or `.env.example`.
 
 ## License
 
