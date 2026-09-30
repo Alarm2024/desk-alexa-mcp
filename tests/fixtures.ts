@@ -238,31 +238,90 @@ export interface LinkLine {
   reason: string;
 }
 
+/** Defanged reported hosts (same order as src/reported-hosts.ts). */
+export const REPORTED_LINKS: Array<{
+  n: number;
+  defanged: string;
+  /** Expected with reported list ON. */
+  on: "scam";
+  /**
+   * Expected with reported list OFF (pattern rules alone).
+   * "scam_or_unclear" means either scam or unclear is accepted.
+   * "record" means we record whatever the patterns return (may be a known miss).
+   */
+  off: "scam" | "scam_or_unclear" | "record";
+}> = [
+  { n: 1, defanged: "phanton[.]app", on: "scam", off: "scam" },
+  { n: 2, defanged: "phantonn[.]app", on: "scam", off: "scam" },
+  { n: 3, defanged: "tickets-ledger[.]com", on: "scam", off: "scam" },
+  { n: 4, defanged: "keys-tangem[.]com", on: "scam", off: "scam" },
+  { n: 5, defanged: "signature[.]land", on: "scam", off: "record" },
+  { n: 6, defanged: "s[.]auths-repair[.]online", on: "scam", off: "scam_or_unclear" },
+  { n: 7, defanged: "phanton[.]pro", on: "scam", off: "scam" },
+  { n: 8, defanged: "phanstart[.]live", on: "scam", off: "record" },
+  { n: 9, defanged: "soldrop[.]w3claim[.]xyz", on: "scam", off: "scam_or_unclear" },
+  { n: 10, defanged: "soldrop[.]solvault[.]ws", on: "scam", off: "scam_or_unclear" },
+  { n: 11, defanged: "sol[.]dot-io[.]cc", on: "scam", off: "record" },
+  { n: 12, defanged: "token-skr[.]org", on: "scam", off: "record" },
+  { n: 13, defanged: "skr[.]solplanet[.]cc", on: "scam", off: "record" },
+  { n: 14, defanged: "hubsync-dev[.]pages[.]dev", on: "scam", off: "scam_or_unclear" },
+  { n: 15, defanged: "blockchainsynced[.]pages[.]dev", on: "scam", off: "scam_or_unclear" },
+];
+
+/** The 15 named official domains from the hackathon brief. */
+export const OFFICIAL_LINKS: string[] = [
+  "phantom.com",
+  "solflare.com",
+  "backpack.app",
+  "jup.ag",
+  "raydium.io",
+  "orca.so",
+  "kamino.com",
+  "jito.network",
+  "marinade.finance",
+  "drift.trade",
+  "sanctum.so",
+  "tensor.trade",
+  "magiceden.us",
+  "pump.fun",
+  "save.finance",
+];
+
+/** Extra official domains kept from earlier code / hardware wallets. */
+export const EXTRA_OFFICIAL_LINKS: string[] = [
+  "https://phantom.app",
+  "https://help.phantom.com/hc/en-us",
+  "https://phantom.com/learn/connect-wallet",
+  "https://solana.com/developers",
+  "https://ledger.com",
+  "https://tangem.com",
+  "https://trezor.io",
+  "https://metamask.io",
+];
+
+/** Brand+lure or punycode cases that must still return scam under pattern rules. */
 export const PHISHING_LINKS: LinkLine[] = [
-  { url: "phantom-wallet-support.com", reason: "lookalike_domain" },
-  { url: "solflare-airdrop.com", reason: "lookalike_domain" },
-  { url: "raydium-claim.net", reason: "lookalike_domain" },
+  { url: "phantom-wallet-support.com", reason: "brand_and_lure" },
+  { url: "solflare-airdrop.com", reason: "brand_and_lure" },
+  { url: "raydium-claim.net", reason: "brand_and_lure" },
   { url: "xn--phntom-3ta.app", reason: "punycode_host" },
-  { url: "https://jupiter-airdrop.xyz/claim", reason: "lookalike_domain" },
-  { url: "https://backpack-app.net/connect", reason: "lookalike_domain" },
-  { url: "https://solana-foundation-giveaway.com", reason: "lookalike_domain" },
+  { url: "https://jupiter-airdrop.xyz/claim", reason: "brand_and_lure" },
   { url: "https://phantom.app.verify-wallet.top/login", reason: "lookalike_domain" },
-  { url: "https://s0lana.com/airdrop", reason: "lookalike_domain" },
+  { url: "phantom.com.attacker.example", reason: "lookalike_domain" },
+];
+
+/** Brand alone or lure alone → unclear. */
+export const UNCLEAR_LINKS: LinkLine[] = [
+  { url: "https://backpack-app.net/connect", reason: "brand_in_host" },
+  { url: "https://solana-foundation-giveaway.com", reason: "brand_in_host" },
   { url: "https://claim-airdrop-sol.com", reason: "lure_words_in_host" },
 ];
 
-export const OFFICIAL_LINKS: string[] = [
-  "https://phantom.com/learn/connect-wallet",
-  "https://phantom.app",
-  "https://help.phantom.com/hc/en-us",
-  "https://solflare.com/download",
-  "https://backpack.app",
-  "https://jup.ag/swap/SOL-USDC",
-  "https://raydium.io/swap/",
-  "https://solana.com/developers",
-  "https://docs.solana.com/",
-  "https://explorer.solana.com/tx/5KtP",
+/** Not official and not flagged. A whole TLD is never a pattern. Shared hosting roots are not reported_host. */
+export const CLEAN_LINKS: string[] = [
+  "abc.xyz",
+  "https://example.org/docs",
+  "https://solscan.io/tx/5KtP",
+  "pages.dev",
+  "other-project.pages.dev",
 ];
-
-/** Not official and not flagged. A whole TLD is never a pattern. */
-export const CLEAN_LINKS: string[] = ["abc.xyz", "https://example.org/docs", "https://solscan.io/tx/5KtP"];

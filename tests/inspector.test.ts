@@ -104,7 +104,7 @@ describe("MCP Inspector connection", () => {
         "url=https://phantom-wallet-support.com/login",
       ]);
       assert.equal(link.code, 0, link.stderr || link.stdout);
-      assert.match(link.stdout, /lookalike_domain/);
+      assert.match(link.stdout, /brand_and_lure/);
 
       const tip = await runInspector([
         url,
