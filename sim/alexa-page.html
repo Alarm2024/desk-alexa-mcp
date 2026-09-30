@@ -50,10 +50,18 @@
       body: JSON.stringify({ jsonrpc: "2.0", id: id++, method, params }),
     });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    return response.json();
+    const text = await response.text();
+    // Streamable HTTP may return SSE (event/data) even for a JSON result body.
+    if (/^\s*event:/i.test(text)) {
+      const dataLine = text.split(/\r?\n/).find((line) => line.startsWith("data:"));
+      if (!dataLine) throw new Error("SSE response had no data line");
+      return JSON.parse(dataLine.slice(5).trim());
+    }
+    return JSON.parse(text);
   }
 
   function toSpeech(payload) {
+    if (payload.summary) return payload.summary;
     if (payload.refused) return payload.warning;
     if (payload.tip) return payload.tip;
     if (payload.steps) return payload.steps.join(" ");
