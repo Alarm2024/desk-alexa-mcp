@@ -34,7 +34,7 @@ export interface ExplainMiss {
 }
 
 const NOTE =
-  "AI-assisted analysis of public pages. read-only chain read of one public Solana transaction. This is not a clearance to sign, connect, or approve.";
+  "AI-assisted analysis of public pages. Read-only chain read of one public Solana transaction. This is not a clearance to sign, connect, or approve.";
 
 const RPC_MS = 12_000;
 

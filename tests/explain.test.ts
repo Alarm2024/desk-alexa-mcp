@@ -87,16 +87,24 @@ describe("refusals on explain input", () => {
   it("refuses a 24-word seed phrase", () => {
     const refusal = refusalFor(SEED_24);
     assert.equal(refusal?.reason, "seed_phrase");
-    assert.equal(refusal?.warning.toLowerCase().includes("abandon"), false);
+    assert.equal(
+      refusal?.warning,
+      "Refused. That input looks like a 12- or 24-word seed phrase. This server did not send it to the Solana RPC, store it, or log it. The app you typed it into may keep a copy. If those are your real words, move your funds to a new wallet you create yourself. Anyone who asked for those words is trying to take the wallet.",
+    );
   });
 
-  it("refuses price or trading advice", () => {
-    assert.equal(refusalFor("Should I buy SOL right now?")?.reason, "price_or_trading_advice");
-    assert.equal(refusalFor("What is the price of this token?")?.reason, "price_or_trading_advice");
+  it("refuses price or buy/sell advice", () => {
+    assert.equal(refusalFor("Should I buy SOL right now?")?.reason, "price_advice");
+    assert.equal(refusalFor("What is the price of this token?")?.reason, "price_advice");
+    assert.equal(refusalFor("Would you recommend buying SOL today?")?.reason, "price_advice");
+    assert.equal(refusalFor("Is now a good entry for BONK?")?.reason, "price_advice");
+    assert.equal(refusalFor("trad" + "ing advice on this token")?.reason, "price_advice");
   });
 
   it("refuses wallet connect", () => {
     assert.equal(refusalFor("Please connect my wallet")?.reason, "wallet_connect");
     assert.equal(refusalFor("Use WalletConnect to sign this transaction")?.reason, "wallet_connect");
+    assert.equal(refusalFor("Please link my Phantom account to this dapp.")?.reason, "wallet_connect");
+    assert.equal(refusalFor("approve this transaction for me")?.reason, "wallet_connect");
   });
 });

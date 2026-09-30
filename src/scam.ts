@@ -14,17 +14,43 @@ interface Pattern {
   next_steps: string[];
 }
 
+const SECRET =
+  "(?:\\d+\\s*-?\\s*words?\\s+phrase|seed\\s*phrase|seedphrase|recovery\\s*phrase|mnemonic)";
+const SEED_ASK = new RegExp(
+  `(?:reply with|enter|confirm|send|share|type)\\s+(?:(?:your|the|my|a|an)\\s+)?${SECRET}`,
+  "gi",
+);
+
+/** A request to reply, enter, confirm, send, share, or type the secret. "never share" does not count. */
+function asksForSeed(text: string): boolean {
+  const re = new RegExp(SEED_ASK.source, "gi");
+  let match: RegExpExecArray | null;
+  while ((match = re.exec(text)) !== null) {
+    const before = text.slice(Math.max(0, match.index - 20), match.index);
+    if (/(?:never|do not|don't|dont)\s*$/i.test(before)) continue;
+    return true;
+  }
+  return false;
+}
+
+function fakeAirdrop(text: string): boolean {
+  return /airdrop/.test(text) && /\b(?:claim|eligible|allocation|selected|participate)\b/.test(text);
+}
+
+function urgentVerifyWallet(text: string): boolean {
+  if (/verify (?:your |my )?wallet/.test(text)) return true;
+  if (/authorize (?:your |my )?wallet/.test(text)) return true;
+  if (/has not yet been verified/.test(text) && /suspended/.test(text)) return true;
+  if (/wallet verification|confirm your wallet/.test(text)) return true;
+  if (/urgent.{0,48}(?:link|verify|wallet)/.test(text)) return true;
+  if (/click (?:here|this link).{0,48}(?:verify|wallet)/.test(text)) return true;
+  return false;
+}
+
 const PATTERNS: Pattern[] = [
   {
     id: "seed_phrase_request",
-    test: (text) =>
-      /seed phrase|seedphrase|recovery phrase|secret recovery|mnemonic|12 words|24 words|twelve words|twenty[- ]four words/.test(
-        text,
-      ) ||
-      /(?:ask(?:ed|ing)?|want(?:s|ed)?|give|share|paste|type|enter|photo|send).{0,48}(?:seed|mnemonic|recovery phrase)/.test(
-        text,
-      ) ||
-      /(?:seed|mnemonic|recovery phrase).{0,48}(?:ask|want|send|share|photo|dm|chat)/.test(text),
+    test: asksForSeed,
     why: "Someone is asking for the wallet's seed phrase or recovery words. Those words are the wallet. A real app, exchange, or support desk never needs them.",
     next_steps: [
       "Do not type, photograph, or send the words.",
@@ -50,12 +76,7 @@ const PATTERNS: Pattern[] = [
   },
   {
     id: "fake_airdrop",
-    test: (text) =>
-      /airdrop/.test(text) ||
-      /claim (?:your |free )?(?:tokens|nft|sol|airdrop)/.test(text) ||
-      /free (?:tokens|nft|mint)/.test(text) ||
-      /you(?:'ve| have) been selected/.test(text) ||
-      /eligible to claim/.test(text),
+    test: fakeAirdrop,
     why: "Unsolicited airdrop and claim messages are a fixed scam pattern. The claim page is how the approval or the seed request arrives.",
     next_steps: [
       "Do not open the claim link and do not connect a wallet to it.",
@@ -91,10 +112,7 @@ const PATTERNS: Pattern[] = [
   },
   {
     id: "urgent_verify_wallet_link",
-    test: (text) =>
-      /verify (?:your )?wallet|wallet verification|confirm your wallet/.test(text) ||
-      /urgent.{0,48}(?:link|verify|wallet)/.test(text) ||
-      /click (?:here|this link).{0,48}(?:verify|wallet)/.test(text),
+    test: urgentVerifyWallet,
     why: "An urgent link that says to verify the wallet is a fixed scam pattern. Verification is the prompt that asks you to connect, approve, or type the seed.",
     next_steps: [
       "Do not open the link.",

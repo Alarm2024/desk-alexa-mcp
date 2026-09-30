@@ -162,7 +162,7 @@ describe("MCP Inspector connection", () => {
         "--tool-arg",
         "situation=Should I buy SOL right now?",
       ]);
-      assert.match(price.stdout, /price_or_trading_advice/);
+      assert.match(price.stdout, /price_advice/);
 
       const connect = await runInspector([
         url,

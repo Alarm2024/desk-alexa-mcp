@@ -23,7 +23,7 @@ export function createIrisServer(): McpServer {
     { name: "iris-alexa", version: SERVER_VERSION },
     {
       instructions:
-        "read-only Iris tools for Alexa+. explain_transaction reads one public Solana signature. check_scam matches six fixed patterns. clean_up_steps lists device or wallet steps the person does themselves. Refuse seed phrases, price or trading advice, and wallet connect. Store nothing.",
+        "Read-only Iris tools for Alexa+. explain_transaction reads one public Solana signature. check_scam matches six fixed patterns. clean_up_steps lists device or wallet steps the person does themselves. Refuse seed phrases, price or buy/sell advice, and wallet connect. Store nothing.",
     },
   );
 
@@ -32,7 +32,7 @@ export function createIrisServer(): McpServer {
     {
       title: "Explain a public Solana transaction",
       description:
-        "read-only. Decode one public Solana transaction signature with the Iris decoder. Uses the public RPC in SOLANA_RPC_URL. Does not sign, connect a wallet, or give price or trading advice. Refuses input that looks like a seed phrase.",
+        "Read-only. Decode one public Solana transaction signature with the Iris decoder. Uses the public RPC in SOLANA_RPC_URL. Does not sign, connect a wallet, or give price or buy/sell advice. Refuses input that looks like a seed phrase.",
       inputSchema: z.object({
         signature: z.string().describe("Public Solana transaction signature, or an explorer URL containing one."),
       }),
@@ -51,7 +51,7 @@ export function createIrisServer(): McpServer {
     {
       title: "Check a situation against fixed scam patterns",
       description:
-        "read-only. Match a description against six fixed patterns: seed-phrase request, fake support DM, fake airdrop, unlimited approval, authority change, and an urgent verify-wallet link. Returns verdict, why, and next steps. Refuses a pasted seed phrase, price or trading advice, and wallet connect.",
+        "Read-only. Match a description against six fixed patterns: seed-phrase request, fake support DM, fake airdrop, unlimited approval, authority change, and an urgent verify-wallet link. Returns verdict, why, and next steps. Refuses a pasted seed phrase, price or buy/sell advice, and wallet connect.",
       inputSchema: z.object({
         situation: z.string().describe("What the person said or what you see. Do not include a seed phrase."),
       }),
@@ -73,7 +73,7 @@ export function createIrisServer(): McpServer {
     {
       title: "Clean-up steps you do yourself",
       description:
-        "read-only checklist for iphone, android, or wallet. Steps are done by the person on their own device. This server cannot connect a wallet or change a device.",
+        "Read-only checklist for iphone, android, or wallet. Steps are done by the person on their own device. This server cannot connect a wallet or change a device.",
       inputSchema: z.object({
         target: z.enum(["iphone", "android", "wallet"]).describe("Which checklist to return."),
       }),

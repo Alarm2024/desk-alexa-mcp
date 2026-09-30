@@ -60,7 +60,7 @@ describe("check_scam", () => {
   it("refuses price advice when no scam pattern matches", () => {
     const situation = "Should I sell this token today?";
     assert.equal(checkScam(situation).verdict, "no_pattern");
-    assert.equal(refusalFor(situation)?.reason, "price_or_trading_advice");
+    assert.equal(refusalFor(situation)?.reason, "price_advice");
   });
 
   it("refuses a wallet-connect request when no scam pattern matches", () => {

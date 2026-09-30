@@ -12,7 +12,7 @@ const wordlist = readFileSync(
 
 const BIP39 = new Set(wordlist);
 
-export type RefusalReason = "seed_phrase" | "price_or_trading_advice" | "wallet_connect";
+export type RefusalReason = "seed_phrase" | "price_advice" | "wallet_connect";
 
 export interface Refusal {
   refused: true;
@@ -21,10 +21,10 @@ export interface Refusal {
 }
 
 const SEED_WARNING =
-  "Refused. That input looks like a 12- or 24-word seed phrase. It was not sent anywhere, not stored, and not logged. Wipe it from this chat. Anyone who asked you to type those words is trying to take the wallet. Write a seed on the wallet's own device.";
+  "Refused. That input looks like a 12- or 24-word seed phrase. This server did not send it to the Solana RPC, store it, or log it. The app you typed it into may keep a copy. If those are your real words, move your funds to a new wallet you create yourself. Anyone who asked for those words is trying to take the wallet.";
 
 const PRICE_WARNING =
-  "Refused. This server does not give price or trading advice. It explains a public Solana transaction, matches six fixed scam patterns, and lists clean-up steps you do yourself.";
+  "Refused. This server does not give price or buy/sell advice. It explains a public Solana transaction, matches six fixed scam patterns, and lists clean-up steps you do yourself.";
 
 const WALLET_WARNING =
   "Refused. This server cannot connect a wallet, sign, or approve. Do not connect a wallet because a message told you to.";
@@ -50,14 +50,17 @@ export function looksLikeSeedPhrase(raw: string): boolean {
   return false;
 }
 
-export function asksPriceOrTradingAdvice(raw: string): boolean {
+export function asksPriceAdvice(raw: string): boolean {
   const text = raw.toLowerCase();
   return (
     /\b(should i|do i|can i|shall i)\s+(buy|sell|trade|long|short)\b/.test(text) ||
-    /\b(price target|trading advice|price prediction)\b/.test(text) ||
+    /\b(price target|price prediction)\b/.test(text) ||
+    /\btrad(?:e|ing) advice\b/.test(text) ||
     /\bwhat(?:'s| is) (?:the )?(?:price|worth)\b/.test(text) ||
     /\bhow much (?:is|should|will)\b/.test(text) ||
-    /\b(buy or sell|good time to buy|good time to sell)\b/.test(text)
+    /\b(buy or sell|good time to buy|good time to sell)\b/.test(text) ||
+    /\brecommend(?:s|ed|ing)?\s+buy(?:ing)?\b/.test(text) ||
+    /\bgood entry\b/.test(text)
   );
 }
 
@@ -67,7 +70,10 @@ export function asksWalletConnect(raw: string): boolean {
     /\bconnect(?:ing)? (?:my |the |your |a )?wallet\b/.test(text) ||
     /\bwallet\s*connect\b/.test(text) ||
     /\bplease connect\b/.test(text) ||
-    /\bsign (?:this |the )?(?:message|transaction)\b/.test(text)
+    /\bsign (?:this |the )?(?:message|transaction)\b/.test(text) ||
+    /\bplease link my\b/.test(text) ||
+    /\blink my \w+ account\b/.test(text) ||
+    /\bapprove this transaction\b/.test(text)
   );
 }
 
@@ -78,8 +84,8 @@ export function refusalFor(raw: string): Refusal | null {
   if (asksWalletConnect(raw)) {
     return { refused: true, reason: "wallet_connect", warning: WALLET_WARNING };
   }
-  if (asksPriceOrTradingAdvice(raw)) {
-    return { refused: true, reason: "price_or_trading_advice", warning: PRICE_WARNING };
+  if (asksPriceAdvice(raw)) {
+    return { refused: true, reason: "price_advice", warning: PRICE_WARNING };
   }
   return null;
 }

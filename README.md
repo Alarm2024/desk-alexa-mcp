@@ -23,17 +23,18 @@ AI-assisted analysis of public pages.
 ## What it refuses
 
 - **Seed phrase.** A 12- or 24-word run from the public BIP-39 English wordlist is refused, with a warning. It is not sent to the RPC, not stored, and not logged.
-- **Price or trading advice.** Questions about whether to buy, sell, or what a price is are refused.
+- **Price or buy/sell advice.** Questions about whether to buy, sell, or what a price is are refused.
 - **Wallet connect.** This server cannot connect a wallet, sign, or approve. A request to do that is refused.
 
 A description of a scam ("they asked for my seed", "urgent link to verify your wallet") is checked by `check_scam`. Pasting the words themselves is refused.
 
 ## Limits
 
-- read-only. No wallet connection, no signing, no device changes.
+- Read-only. No wallet connection, no signing, no device changes.
 - Solana signatures. The decoder is the Iris 35 Solana decoder.
 - The RPC default is the public endpoint `https://api.mainnet-beta.solana.com`. Set `SOLANA_RPC_URL` to another public endpoint if you need to. Never commit a key or a private URL.
 - `check_scam` is six fixed string rules. A `no_pattern` verdict is not a clearance.
+- The rules read English. Other languages get no_pattern, which is not a clearance.
 - A class of QUIET / OPEN PATHS / ACT NOW describes the decoded instructions. It is not a clearance to sign.
 - Clean-up steps are instructions for you. The server cannot tap the phone or open the wallet.
 - Nothing is written to disk about a request. Process memory holds a request while that request is handled.
