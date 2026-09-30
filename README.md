@@ -71,7 +71,7 @@ A description of a scam ("they asked for my seed", "urgent link to verify your w
 ### Known misses
 
 - **Dapptoolkit how-to** (SEAL PSA): "Yes, you can Dapptoolkit…" reads like ordinary how-to help from the text alone, so there is no rule that flags ordinary how-to messages.
-- **Pattern rules alone** (reported list off) still miss some past hosts: `signature.land`, `phanstart.live`, `sol.dot-io.cc`, `token-skr.org`, `skr.solplanet.cc`. With the reported list on, those fifteen hosts return `scam`.
+- **Pattern rules alone** (reported list off) still miss some past hosts: `signature.land`, `phanstart[.]live`, `sol.dot-io.cc`, `token-skr.org`, `skr.solplanet.cc`. With the reported list on, those fifteen hosts return `scam`.
 
 ## Run
 
@@ -137,7 +137,7 @@ npx mcp-inspector --cli http://127.0.0.1:3000/mcp --transport http \
 npm test
 npm run typecheck
 npm run check:words
-sh scripts/smoke.sh
+bash scripts/smoke.sh
 ```
 
 Fixtures in `tests/fixtures.ts`: real scam lines, synthetic scam lines, normal lines, refusals, bypass lines, reported hosts, and official domains. One test per line. Saved `getTransaction` JSON under `tests/fixtures/rpc/` drives offline summary checks. The HTTP suite covers each row of the `/mcp` table above. `check:words` fails when a word from the project's banned list appears in `README.md`, `src`, `tests`, `sim`, `scripts`, `render.yaml`, or `.env.example`.

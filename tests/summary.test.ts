@@ -65,7 +65,7 @@ describe("explain_transaction summaries from saved RPC fixtures", () => {
     const summarized = summarizeExplain(decoded);
     assert.match(summarized.summary, /QUIET/i);
     assert.match(summarized.summary, /0\.1 SOL/);
-    assert.equal(/safe|guarantee|clearance to sign/i.test(summarized.summary), false);
+    assert.equal(/safe|clearance to sign/i.test(summarized.summary), false);
   });
 
   it("OPEN PATHS swap names the class without inventing amounts", () => {

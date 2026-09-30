@@ -31,7 +31,7 @@ describe("check_link fixtures: reported list ON", () => {
       assert.equal(result.verdict, "scam", host);
       assert.equal(result.reason, "reported_host", host);
       assert.match(result.why, /Reported as phishing by/);
-      assert.match(result.why, /past report, not a live check/);
+      assert.match(result.why, /past report, not a current scan/);
     });
   }
 });

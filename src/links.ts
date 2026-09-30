@@ -159,7 +159,7 @@ function parseHostname(raw: string): string | null {
 /**
  * Normalize before any check: add https:// if there is no scheme, parse with the
  * WHATWG URL parser (IDNA → xn--), lowercase, drop trailing dot, drop the port.
- * Uses URL.hostname only, so "https://phantom.com@evil.example/" is evil.example.
+ * Uses URL.hostname alone, so "https://phantom.com@evil.example/" is evil.example.
  * Never uses substring matching for the verdict host.
  */
 export function normalizeHost(input: string): string | null {
@@ -285,7 +285,7 @@ export function misspelledBrand(host: string): string | null {
 
 function reportedWhy(entry: ReportedHost): string {
   const when = entry.date ? ` (${entry.date})` : "";
-  return `Reported as phishing by ${entry.source}${when}. This is a past report, not a live check.`;
+  return `Reported as phishing by ${entry.source}${when}. This is a past report, not a current scan.`;
 }
 
 export function checkLink(input: string, options: CheckLinkOptions = {}): LinkReport {

@@ -71,7 +71,7 @@ export function summarizeCleanup(plan: CleanupPlan): WithSummary<CleanupPlan> {
 }
 
 /**
- * Spoken one-liner for a decoded transaction. Amounts only when present in findings.
+ * Spoken one-liner for a decoded transaction. Amounts when present in findings.
  * ACT NOW with an unknown program and unlimited approvals uses fixed wording.
  */
 export function summarizeExplain(report: ExplainOk | ExplainMiss): WithSummary<ExplainOk | ExplainMiss> {

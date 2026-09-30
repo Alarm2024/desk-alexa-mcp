@@ -112,7 +112,7 @@ const CONNECT_TO_PROCEED =
   /^\s*.{0,30}?\b(?:to|and|so)\s+(?:we\s+can\s+|you\s+can\s+|i\s+can\s+)?(?:proceed|continue|fix|restore|resolve|recover|unlock|verify|claim|receive|complete|confirm|rectify|sync|validate|migrate|get)\b/;
 const CONNECT_HERE = /^\s*(?:here|below|now|via|at|using|on|through|with)\b/;
 
-/** "What wallet are you using" is a scam signal only next to these companions. */
+/** "What wallet are you using" is a scam signal when next to these companions. */
 function whatWalletAsk(text: string): boolean {
   return /\b(?:what|which)\s+wallet\s+(?:are|do)\s+you\s+(?:use|using|have|on)\b|\bwhat wallet are you\b/.test(text);
 }

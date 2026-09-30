@@ -1,6 +1,6 @@
 /**
  * Reported phishing hosts, stored DEFANGED.
- * Replace "[.]" with "." when loading. Exact host match only.
+ * Replace "[.]" with "." when loading. Exact host match.
  * Source URLs sit in the comments for Instinct's source file.
  */
 
