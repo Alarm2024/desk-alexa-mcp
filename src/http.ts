@@ -241,7 +241,7 @@ export function startServer(options: { host?: string; port?: number; env?: NodeJ
       res.end(
         JSON.stringify({
           status: "ok",
-          service: "iris-alexa-mcp",
+          service: "iris-alexa",
           transport: "streamable-http",
           mcp_spec: MCP_SPEC,
           read_only: true,
@@ -269,7 +269,7 @@ export function startServer(options: { host?: string; port?: number; env?: NodeJ
       server.off("error", reject);
       const address = server.address();
       const bound = typeof address === "object" && address ? address.port : port;
-      console.error(`iris-alexa-mcp listening path=${MCP_PATH} port=${bound}`);
+      console.error(`iris-alexa listening path=${MCP_PATH} port=${bound}`);
       resolve(server);
     });
   });

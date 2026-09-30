@@ -1,8 +1,13 @@
-# Iris for Alexa+
+# iris-alexa
 
 **Amazon Developer Hackathon — Alexa+ track**
 
 Self-hosted, read-only [Model Context Protocol](https://modelcontextprotocol.io) server for Alexa+ and other MCP hosts. It speaks **Streamable HTTP** with the official TypeScript SDK (`@modelcontextprotocol/server` and `@modelcontextprotocol/node`) on MCP spec **2025-11-25** or later.
+
+```bash
+git clone https://github.com/Alarm2024/iris-alexa.git
+cd iris-alexa
+```
 
 The server stores nothing. It does not log tool arguments. It holds no private key and has no code path that signs, sends, connects, or approves anything.
 
@@ -18,7 +23,7 @@ The server stores nothing. It does not log tool arguments. It holds no private k
 | `safety_tip` | Optional `topic` | One short reminder written to be spoken aloud. Topics: `general`, `seed_phrase`, `links`, `approvals`, `support`, `qr_codes`. |
 | `clean_up_steps` | `target`: `iphone`, `android`, or `wallet` | A checklist you do yourself on that device. |
 
-`check_link` and `safety_tip` were ported from [Alarm2024/iris-alexa-guard](https://github.com/Alarm2024/iris-alexa-guard). `check_scam` is this repo's name for that project's `check_message`. `desk-alexa-mcp` already ran a working Streamable HTTP MCP server, so Iris is built on that repo.
+`check_link` and `safety_tip` were ported from [Alarm2024/iris-alexa-guard](https://github.com/Alarm2024/iris-alexa-guard).
 
 AI-assisted analysis of public pages.
 
