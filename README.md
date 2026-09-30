@@ -38,16 +38,15 @@ AI-assisted analysis of public pages.
 
 ### Link rules
 
-- Official: `phantom.com`, `phantom.app`, `solflare.com`, `backpack.app`, `jup.ag`, `raydium.io`, `solana.com`, and their subdomains. A path on an official domain (`phantom.com/learn/connect-wallet`) is official.
-- A host that carries one of those brand names anywhere else (`phantom-wallet-support.com`, `solflare-airdrop.com`, `raydium-claim.net`) is a lookalike.
-- Any `xn--` (punycode) host is a lookalike.
-- A short link (`bit.ly`, `t.co`, `tinyurl.com`, …) gets: can't see where it goes; open the official app yourself.
-- Whole TLDs are never flagged. `abc.xyz` is clean.
-- `official` and `no_known_pattern` both say who runs the page, not that a prompt on it is safe to sign.
+- Normalize the host with the WHATWG URL parser (add `https://` when needed, IDNA to `xn--`, lowercase, drop a trailing dot, drop the port). Judgement uses `URL.hostname` alone, so `https://phantom.com@evil.example/` is `evil.example`.
+- Official: `phantom.com`, `solflare.com`, `backpack.app`, `jup.ag`, `raydium.io`, `orca.so`, `kamino.com`, `jito.network`, `marinade.finance`, `drift.trade`, `sanctum.so`, `tensor.trade`, `magiceden.us`, `pump.fun`, `save.finance`, plus Ledger / Tangem / Trezor / MetaMask / `phantom.app` / `solana.com` and their subdomains. Shared hosting (`pages.dev`, `vercel.app`, …) is never official as a whole.
+- A host on the reported list (exact match) returns `scam` / `reported_host`. That is a past report, not a clearance.
+- Misspelled brand labels, brand name plus a lure word, or any `xn--` host → `scam`. Brand alone or lure alone → `unclear` ("don't connect a wallet; open the official app yourself"). Short links → `unclear`.
+- A domain check cannot catch every phishing host.
 
 ## What it refuses
 
-Every refusal has the same shape: `{ "refused": true, "reason": ..., "warning": ... }`, from every tool.
+Every refusal has the same shape: `{ "refused": true, "reason": ..., "warning": ..., "summary": ... }`, from every tool.
 
 | `reason` | Trigger |
 | --- | --- |
@@ -64,24 +63,35 @@ A description of a scam ("they asked for my seed", "urgent link to verify your w
 - The RPC default is the public endpoint `https://api.mainnet-beta.solana.com`. Set `SOLANA_RPC_URL` to another public endpoint if you need to. Never commit a key or a private URL.
 - The rules read English. Other languages get `no_known_pattern`, which is not a clearance.
 - `check_scam` and `check_link` are fixed string rules. A clean result is not a clearance.
+- A domain check cannot catch every phishing host. The reported list is a past report, not a clearance.
 - A class of QUIET / OPEN PATHS / ACT NOW describes the decoded instructions. It is not a clearance to sign.
 - Clean-up steps are instructions for you. The server cannot tap the phone or open the wallet.
 - Nothing is written to disk about a request. Process memory holds a request while that request is handled.
 
+### Known misses
+
+- **Dapptoolkit how-to** (SEAL PSA): "Yes, you can Dapptoolkit…" reads like ordinary how-to help from the text alone, so there is no rule that flags ordinary how-to messages.
+- **Pattern rules alone** (reported list off) still miss some past hosts: `signature.land`, `phanstart.live`, `sol.dot-io.cc`, `token-skr.org`, `skr.solplanet.cc`. With the reported list on, those fifteen hosts return `scam`.
+
 ## Run
 
+Needs **Node 22** (or Node `>=20.12`). From a fresh clone:
+
 ```bash
+git clone https://github.com/Alarm2024/iris-alexa.git
+cd iris-alexa
 npm install
 cp .env.example .env   # optional
 npm start
 ```
 
-Listens on `0.0.0.0:$PORT` (default port `3000`). `.env` is read with `process.loadEnvFile()`; Node 20.12 or newer.
+Listens on `0.0.0.0:$PORT` (default port `3000`). `.env` is read with `process.loadEnvFile()`.
 
 | URL | Purpose |
 | --- | --- |
 | `http://127.0.0.1:3000/mcp` | Streamable HTTP MCP |
 | `http://127.0.0.1:3000/health` | Status. No user data. |
+| `http://127.0.0.1:3000/sim` | Simulated assistant page (`sim/alexa-page.html`) |
 
 ### What `/mcp` enforces
 
@@ -107,8 +117,10 @@ On the free plan the service sleeps after about 15 minutes without traffic. The 
 
 ## Tested with
 
-- **MCP Inspector**, CLI mode, over Streamable HTTP: `tools/list` and a `tools/call` on each tool, including each refusal. This runs in `npm test`.
-- **A simulated Alexa+ page** at `http://127.0.0.1:3000/sim` (source in `sim/alexa-page.html`). It posts the same JSON-RPC calls an MCP host sends to `/mcp`, shows the text an assistant would read out, and can speak it with the browser's speech API. It is served same-origin, so the Origin check applies to it like any browser client. It is a stand-in for the Alexa+ MCP host; this repo makes no claim about Amazon's manifest or registration format, and includes none.
+One hackathon entry. MIT license. Tested with **MCP Inspector** and a **simulated** page at `/sim` — not real Alexa+. No Amazon or Alexa logos or sounds in `/sim` or this README.
+
+- **MCP Inspector**, CLI mode, over Streamable HTTP: `tools/list` and a `tools/call` on each tool, including each refusal. This runs in `npm test` and in `scripts/smoke.sh`.
+- **A simulated page** at `http://127.0.0.1:3000/sim` (source in `sim/alexa-page.html`). It posts the same JSON-RPC calls an MCP host sends to `/mcp`, shows the text an assistant would read out, and can speak it with the browser speech API. It is served same-origin. It is a stand-in for an MCP host; this repo makes no claim about Amazon registration format, and includes none.
 
 ```bash
 npx mcp-inspector --cli http://127.0.0.1:3000/mcp --transport http --method tools/list
@@ -116,7 +128,7 @@ npx mcp-inspector --cli http://127.0.0.1:3000/mcp --transport http --method tool
 
 ```bash
 npx mcp-inspector --cli http://127.0.0.1:3000/mcp --transport http \
-  --method tools/call --tool-name check_link --tool-arg url=phantom-wallet-support.com
+  --method tools/call --tool-name check_link --tool-arg url=phanton.app
 ```
 
 ## Tests
@@ -125,9 +137,10 @@ npx mcp-inspector --cli http://127.0.0.1:3000/mcp --transport http \
 npm test
 npm run typecheck
 npm run check:words
+sh scripts/smoke.sh
 ```
 
-Fixtures in `tests/fixtures.ts`: 18 scam lines, 10 normal lines, 8 refusals, 20 links (10 phishing, 10 official) plus clean-TLD cases, 6 bypass lines that must come out as scams, and 4 more refusals. One test per line. The HTTP suite covers each row of the `/mcp` table above. `check:words` fails when a word from the project's banned list appears in `README.md`, `src`, `tests`, or `.env.example`.
+Fixtures in `tests/fixtures.ts`: real scam lines, synthetic scam lines, normal lines, refusals, bypass lines, reported hosts, and official domains. One test per line. Saved `getTransaction` JSON under `tests/fixtures/rpc/` drives offline summary checks. The HTTP suite covers each row of the `/mcp` table above. `check:words` fails when a word from the project's banned list appears in `README.md`, `src`, `tests`, `sim`, `scripts`, `render.yaml`, or `.env.example`.
 
 ## License
 
