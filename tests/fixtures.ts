@@ -2,9 +2,8 @@
  * Fixture corpus. One test per entry, see corpus.test.ts and links.test.ts.
  *
  * SCAM 1-9: Instinct's real lines. SCAM 10-18: real SEAL lines + labeled synthetics.
- * SCAM 19-21: screenshot-verified DMs (real).
  * CURSOR_WRITTEN: composites from earlier Cursor work; kept as tests, not deleted.
- * CONTEXT: empty. Atomic and SlowMist lines are kept out on purpose.
+ * CONTEXT: run and report, no assertions (no sender context).
  */
 
 export interface ScamLine {
@@ -57,8 +56,8 @@ export const CURSOR_WRITTEN: ScamLine[] = [
 ];
 
 /**
- * SCAM rows 1-9 (Instinct), 10-18 (real SEAL + synthetic), 19-21 (screenshot-verified DMs).
- * Real count = 15 of 21. Dapptoolkit = known miss.
+ * SCAM rows 1-9 (Instinct) plus rows 10-18 (real SEAL + synthetic).
+ * Real count for the PR table = 15 (1-9, three SEAL rows, three screenshot-verified DMs). Dapptoolkit = known miss.
  */
 export const SCAM: ScamLine[] = [
   {
@@ -152,22 +151,22 @@ export const SCAM: ScamLine[] = [
     synthetic: true,
     line: "Complete this free Solana verification at [link]. Sign the transaction containing System Assign to move your account to our program; the unchanged balance proves it is safe.",
   },
-  // Know Your Crook, 2022-04-04, https://paragraph.com/@knowyourcrook/scam-review-validate-your-wallet
   {
     pattern: "validate_or_sync_wallet",
     real: true,
+    // Know Your Crook, 2022-04-04, https://paragraph.com/@knowyourcrook/scam-review-validate-your-wallet
     line: "[link] 1. Click on the digital web link above 2. Click on get started 3. Click on synchronize wallet 4. Select the wallet you're using from the wallet list 5. Get your wallet connected.",
   },
-  // r/cardano, 2021-12-10, https://www.reddit.com/r/cardano/comments/rd9cjr/
   {
     pattern: "fake_support_dm",
     real: true,
+    // r/cardano, 2021-12-10, https://www.reddit.com/r/cardano/comments/rd9cjr/
     line: "Reconnecting your wallet via dapps What wallet are you using?",
   },
-  // r/CryptoCurrency, 2021-11-17, https://www.reddit.com/r/CryptoCurrency/comments/qw4rga/
   {
     pattern: "validate_or_sync_wallet",
     real: true,
+    // r/CryptoCurrency, 2021-11-17, https://www.reddit.com/r/CryptoCurrency/comments/qw4rga/
     line: "Hello Had the same issue some week ago Have you tried rectificating your wallet on their website",
   },
 ];
@@ -183,6 +182,7 @@ export const NORMAL: string[] = [
   'Hey guys my trust app keeps saying "Invalid Account For Fee", anyone know what might cause this? Any help is appreciated.',
   "What is going on here? Can someone help me understand?",
   "What do you mean by burning the token account ?",
+  // synthetic counterexample: the question alone is ordinary chat
   "What wallet are you using? I like Phantom for NFTs.",
 ];
 
@@ -245,8 +245,12 @@ export const BYPASS: ScamLine[] = [
   },
 ];
 
-/** Screenshot-verified DMs are in SCAM. Atomic and SlowMist lines are kept out on purpose. */
+/**
+ * CONTEXT: run and report, no assertions. No sender info, so a bland line may stay no_known_pattern.
+ */
 export const CONTEXT: string[] = [];
+// The Atomic ("Systems are down...") and SlowMist ("You signed a phishing signature") lines are
+// kept out on purpose: they need sender context. The three screenshot-verified DMs are in SCAM.
 
 export interface LinkLine {
   url: string;
