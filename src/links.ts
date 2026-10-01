@@ -121,9 +121,8 @@ export const SHORT_LINK_HOSTS = new Set([
   "qrco.de",
 ]);
 
-/** Lure words: wallet, support, help, tickets, keys, claim, airdrop, drop, sync, rectif, repair, auth, reward, verify, connect. */
-const LURE_WORD =
-  /(?:wallet|support|help|tickets?|keys?|claim|airdrop|drop|sync|rectif\w*|repair|auth|reward|verify|connect)/i;
+/** Drainer / lure words in the host. Alone → unclear; with brand or misspelling → scam. */
+const LURE_WORD = /(?:claim|airdrop|drop|sync|rectif\w*|repair|auth|reward|verify)/i;
 
 const URL_IN_TEXT =
   /(?:https?:\/\/|www\.)[^\s<>"'()]+|\b(?:[a-z0-9-]+\.)+(?:[a-z]{2,24}|xn--[a-z0-9-]+)(?:\/[^\s<>"'()]*)?/i;
@@ -253,15 +252,13 @@ export function editDistance(a: string, b: string): number {
   return prev[b.length];
 }
 
-function editBudget(brand: string): number {
-  if (brand.length >= 7) return 2;
-  if (brand.length === 6) return 1;
-  return 0;
+/** Within 2 edits of a listed brand (phantom, solflare, backpack, jupiter, raydium, ledger, tangem, trezor, metamask). */
+function editBudget(_brand: string): number {
+  return 2;
 }
 
 /**
- * A host label within the edit budget of a 6+ letter brand, and not an official host.
- * No misspelling check for brands under 6 letters.
+ * A host label within 2 letters of a brand, and not an official host.
  */
 export function misspelledBrand(host: string): string | null {
   if (isOfficialHost(host)) return null;
@@ -274,7 +271,6 @@ export function misspelledBrand(host: string): string | null {
     if (piece.length < 4) continue;
     for (const brand of SPELLING_BRANDS) {
       const budget = editBudget(brand);
-      if (budget === 0) continue;
       if (piece === brand) continue;
       if (Math.abs(piece.length - brand.length) > budget) continue;
       if (editDistance(piece, brand) <= budget) return brand;
@@ -402,7 +398,7 @@ export function checkLink(input: string, options: CheckLinkOptions = {}): LinkRe
       reason: "brand_and_lure",
       host,
       brand,
-      why: `${host} carries the ${brand} name and a lure word (wallet, support, claim, …) but is not an official ${brand} domain.`,
+      why: `${host} carries the ${brand} name and a lure word (claim, drop, sync, …) but is not an official ${brand} domain.`,
       next_steps: [
         "Do not open the link.",
         DO_NOT_CONNECT,
@@ -411,12 +407,27 @@ export function checkLink(input: string, options: CheckLinkOptions = {}): LinkRe
     });
   }
 
-  if (brand || lure) {
+  if (brand) {
     return report({
-      verdict: "unclear",
-      reason: brand ? "brand_in_host" : "lure_words_in_host",
+      verdict: "scam",
+      reason: "lookalike_domain",
       host,
       brand,
+      why: `${host} carries the ${brand} name but is not ${(OFFICIAL_DOMAINS[brand] ?? []).join(" or ") || "an official domain"} or a subdomain of it. That is a lookalike domain.`,
+      next_steps: [
+        "Do not open the link.",
+        DO_NOT_CONNECT,
+        `If you need ${brand}, type ${(OFFICIAL_DOMAINS[brand] ?? [])[0] ?? "the official site"} yourself or open the app you installed.`,
+      ],
+    });
+  }
+
+  if (lure) {
+    return report({
+      verdict: "unclear",
+      reason: "lure_words_in_host",
+      host,
+      brand: null,
       why: `${OPEN_OFFICIAL}. ${NOT_A_CLEARANCE}`,
       next_steps: [
         "Do not open the link from a message.",

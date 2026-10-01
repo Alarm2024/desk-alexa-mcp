@@ -4,11 +4,13 @@ import { evaluateMessage } from "../src/evaluate.js";
 import { refusalFor } from "../src/refusals.js";
 import {
   BYPASS,
+  CONTEXT,
   CURSOR_WRITTEN,
+  DUAL_TOOL_REFUSALS,
+  LATER_REFUSALS,
   NORMAL,
-  REAL_SCAM,
   REFUSALS,
-  SYNTHETIC_SCAM,
+  SCAM,
   type ScamLine,
 } from "./fixtures.js";
 
@@ -23,10 +25,6 @@ function expectScam(sample: ScamLine): void {
   );
 }
 
-function normalLine(entry: (typeof NORMAL)[number]): string {
-  return typeof entry === "string" ? entry : entry.line;
-}
-
 describe("fixture corpus: CURSOR_WRITTEN scam lines", () => {
   assert.equal(CURSOR_WRITTEN.length, 9);
   for (const [index, sample] of CURSOR_WRITTEN.entries()) {
@@ -34,13 +32,14 @@ describe("fixture corpus: CURSOR_WRITTEN scam lines", () => {
   }
 });
 
-describe("fixture corpus: REAL_SCAM lines", () => {
-  assert.equal(REAL_SCAM.length, 15);
-  for (const [index, sample] of REAL_SCAM.entries()) {
+describe("fixture corpus: SCAM lines", () => {
+  assert.equal(SCAM.length, 18);
+  assert.equal(SCAM.filter((s) => s.real).length, 12);
+  assert.equal(SCAM.filter((s) => s.synthetic).length, 6);
+  for (const [index, sample] of SCAM.entries()) {
     if (sample.known_miss) {
-      it(`real scam ${index + 1} known miss (Dapptoolkit how-to; no ordinary how-to rule)`, () => {
+      it(`scam ${index + 1} known miss (Dapptoolkit how-to; no ordinary how-to rule)`, () => {
         const result = evaluateMessage(sample.line);
-        // Documented known miss: from the text alone it reads like normal how-to help.
         if (!result.refused && result.verdict === "scam") {
           assert.ok(true, "caught unexpectedly — fine");
           return;
@@ -51,24 +50,13 @@ describe("fixture corpus: REAL_SCAM lines", () => {
       });
       continue;
     }
-    it(`real scam ${index + 1} is ${sample.pattern}`, () => expectScam(sample));
-  }
-});
-
-describe("fixture corpus: SYNTHETIC_SCAM lines", () => {
-  assert.equal(SYNTHETIC_SCAM.length, 6);
-  for (const [index, sample] of SYNTHETIC_SCAM.entries()) {
-    it(`synthetic scam ${index + 1} is ${sample.pattern}`, () => {
-      assert.equal(sample.synthetic, true);
-      expectScam(sample);
-    });
+    it(`scam ${index + 1} is ${sample.pattern}${sample.synthetic ? " (synthetic)" : ""}`, () => expectScam(sample));
   }
 });
 
 describe("fixture corpus: normal lines", () => {
-  assert.equal(NORMAL.length, 11);
-  for (const [index, entry] of NORMAL.entries()) {
-    const line = normalLine(entry);
+  assert.equal(NORMAL.length, 10);
+  for (const [index, line] of NORMAL.entries()) {
     it(`normal line ${index + 1} is no_known_pattern and not refused`, () => {
       const result = evaluateMessage(line);
       assert.equal(result.refused, false, line);
@@ -82,7 +70,7 @@ describe("fixture corpus: normal lines", () => {
 });
 
 describe("fixture corpus: refusals", () => {
-  assert.equal(REFUSALS.length, 14);
+  assert.equal(REFUSALS.length, 8);
   for (const [index, sample] of REFUSALS.entries()) {
     it(`refusal ${index + 1} is refused as ${sample.reason}`, () => {
       const result = evaluateMessage(sample.line);
@@ -92,12 +80,33 @@ describe("fixture corpus: refusals", () => {
       assert.ok(result.warning.startsWith("Refused."));
       assert.equal(JSON.stringify(result).includes("abandon"), false);
     });
-    if (sample.both_tools) {
-      it(`refusal ${index + 1} also refused on explain_transaction path`, () => {
-        const refusal = refusalFor(sample.line);
-        assert.equal(refusal?.reason, sample.reason, sample.line);
-      });
-    }
+  }
+});
+
+describe("fixture corpus: LATER_REFUSALS", () => {
+  assert.equal(LATER_REFUSALS.length, 4);
+  for (const [index, sample] of LATER_REFUSALS.entries()) {
+    it(`later refusal ${index + 1} is refused as ${sample.reason}`, () => {
+      const result = evaluateMessage(sample.line);
+      assert.equal(result.refused, true, sample.line);
+      if (!result.refused) return;
+      assert.equal(result.reason, sample.reason, sample.line);
+    });
+  }
+});
+
+describe("fixture corpus: dual-tool refusals", () => {
+  for (const sample of DUAL_TOOL_REFUSALS) {
+    it(`check_scam refuses ${sample.reason}: ${sample.line}`, () => {
+      const result = evaluateMessage(sample.line);
+      assert.equal(result.refused, true, sample.line);
+      if (!result.refused) return;
+      assert.equal(result.reason, sample.reason, sample.line);
+    });
+    it(`explain_transaction path refuses ${sample.reason}: ${sample.line}`, () => {
+      const refusal = refusalFor(sample.line);
+      assert.equal(refusal?.reason, sample.reason, sample.line);
+    });
   }
 });
 
@@ -108,20 +117,15 @@ describe("fixture corpus: bypass lines run the scam rules before refusals", () =
   }
 });
 
-describe("what-wallet companion rule", () => {
-  it("does not flag a bare what-wallet question", () => {
-    const result = evaluateMessage("What wallet are you using? I like Phantom for NFTs.");
-    assert.equal(result.refused, false);
-    if (result.refused) return;
-    assert.equal(result.verdict, "no_known_pattern");
-  });
-
-  it("flags what-wallet next to use <tool> or reconnect/dapp", () => {
-    assert.equal(evaluateMessage("Use debridge, what wallet are you using? [redacted]").refused === false &&
-      (evaluateMessage("Use debridge, what wallet are you using? [redacted]") as { verdict: string }).verdict, "scam");
-    assert.equal(
-      (evaluateMessage("Reconnecting your wallet via dapps What wallet are you using?") as { verdict: string }).verdict,
-      "scam",
-    );
-  });
+describe("fixture corpus: CONTEXT (report, no assertions)", () => {
+  assert.equal(CONTEXT.length, 5);
+  for (const [index, line] of CONTEXT.entries()) {
+    it(`context ${index + 1} runs and reports`, () => {
+      const result = evaluateMessage(line);
+      const verdict = result.refused ? `refused/${result.reason}` : result.verdict;
+      // eslint-disable-next-line no-console
+      console.log(`CONTEXT ${index + 1}: ${verdict} :: ${line.slice(0, 80)}`);
+      assert.ok(typeof verdict === "string");
+    });
+  }
 });

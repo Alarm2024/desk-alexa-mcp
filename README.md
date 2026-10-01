@@ -70,8 +70,8 @@ A description of a scam ("they asked for my seed", "urgent link to verify your w
 
 ### Known misses
 
-- **Dapptoolkit how-to** (SEAL PSA): "Yes, you can Dapptoolkit…" reads like ordinary how-to help from the text alone, so there is no rule that flags ordinary how-to messages.
-- **Pattern rules alone** (reported list off) still miss some past hosts: `signature.land`, `phanstart[.]live`, `sol.dot-io.cc`, `token-skr.org`, `skr.solplanet.cc`. With the reported list on, those fifteen hosts return `scam`.
+- **Dapptoolkit how-to** (SEAL PSA): from the text alone it reads like ordinary how-to help, so there is no rule that flags ordinary how-to messages.
+- **Domain check**: a domain check can't catch every phishing host. Pattern rules still miss `signature.land`, `phanstart[.]live`, `sol.dot-io.cc`, `token-skr.org`, `skr.solplanet.cc`.
 
 ## Run
 
