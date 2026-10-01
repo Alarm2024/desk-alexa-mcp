@@ -277,7 +277,8 @@ describe("/mcp hardening", () => {
     const reply = await send(port, { path: "/sim", method: "GET" });
     assert.equal(reply.status, 200);
     assert.match(String(reply.headers["content-type"]), /text\/html/);
-    assert.match(reply.body, /iris-alexa — simulated page/);
+    assert.match(reply.body, /Simulated Alexa\+ page — not a real Alexa device/);
+    assert.match(reply.body, /iris-alexa/);
     assert.match(reply.body, /fetch\("\/mcp"/);
   });
 
