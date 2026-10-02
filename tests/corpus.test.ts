@@ -33,8 +33,8 @@ describe("fixture corpus: CURSOR_WRITTEN scam lines", () => {
 });
 
 describe("fixture corpus: SCAM lines", () => {
-  assert.equal(SCAM.length, 18);
-  assert.equal(SCAM.filter((s) => s.real).length, 12);
+  assert.equal(SCAM.length, 21);
+  assert.equal(SCAM.filter((s) => s.real).length, 15);
   assert.equal(SCAM.filter((s) => s.synthetic).length, 6);
   for (const [index, sample] of SCAM.entries()) {
     if (sample.known_miss) {
@@ -55,7 +55,7 @@ describe("fixture corpus: SCAM lines", () => {
 });
 
 describe("fixture corpus: normal lines", () => {
-  assert.equal(NORMAL.length, 10);
+  assert.equal(NORMAL.length, 11);
   for (const [index, line] of NORMAL.entries()) {
     it(`normal line ${index + 1} is no_known_pattern and not refused`, () => {
       const result = evaluateMessage(line);
@@ -118,7 +118,7 @@ describe("fixture corpus: bypass lines run the scam rules before refusals", () =
 });
 
 describe("fixture corpus: CONTEXT (report, no assertions)", () => {
-  assert.equal(CONTEXT.length, 5);
+  assert.equal(CONTEXT.length, 0);
   for (const [index, line] of CONTEXT.entries()) {
     it(`context ${index + 1} runs and reports`, () => {
       const result = evaluateMessage(line);
