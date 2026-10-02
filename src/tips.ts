@@ -27,6 +27,18 @@ export function isTipTopic(value: string): value is TipTopic {
   return (TIP_TOPICS as readonly string[]).includes(value);
 }
 
+/**
+ * A typed or spoken topic, mapped to one of TIP_TOPICS: case, spaces and
+ * hyphens are ignored, and a missing plural is added ("seed phrase",
+ * "Seed-Phrase", "qr code", "link"). Anything else is undefined, not guessed.
+ */
+export function toTipTopic(value: string): TipTopic | undefined {
+  const key = value.trim().toLowerCase().replace(/[\s-]+/g, "_");
+  if (isTipTopic(key)) return key;
+  const plural = `${key}s`;
+  return isTipTopic(plural) ? plural : undefined;
+}
+
 export function safetyTip(topic: TipTopic = "general"): SafetyTip {
   return { refused: false, topic, tip: TIPS[topic] };
 }

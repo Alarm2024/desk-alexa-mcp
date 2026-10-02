@@ -11,7 +11,7 @@ import {
   summarizeRefusal,
   summarizeTip,
 } from "./summary.js";
-import { isTipTopic, safetyTip, TIP_TOPICS } from "./tips.js";
+import { safetyTip, TIP_TOPICS, toTipTopic } from "./tips.js";
 
 const SERVER_VERSION = "1.1.0";
 
@@ -116,8 +116,8 @@ export function createIrisServer(): McpServer {
       annotations: { ...READ_ONLY, openWorldHint: false },
     },
     guarded(({ topic }) => {
-      const chosen = (topic ?? "general").trim().toLowerCase();
-      if (!isTipTopic(chosen)) {
+      const chosen = toTipTopic(topic ?? "general");
+      if (!chosen) {
         return textResult({ refused: false, message: `topic must be one of: ${TIP_TOPICS.join(", ")}.` }, true);
       }
       return resultFor(summarizeTip(safetyTip(chosen)));

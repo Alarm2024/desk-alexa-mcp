@@ -267,6 +267,20 @@ describe("/mcp hardening", () => {
     }
   });
 
+  it("answers safety_tip for a topic typed with a space", async () => {
+    const reply = await send(port, { body: toolCall(6, "safety_tip", { topic: "seed phrase" }) });
+    assert.equal(reply.status, 200, reply.body);
+    assert.match(reply.body, /\\"topic\\":\\"seed_phrase\\"/);
+    assert.doesNotMatch(reply.body, /"isError":true/);
+  });
+
+  it("answers an unknown safety_tip topic with isError and the allowed list", async () => {
+    const reply = await send(port, { body: toolCall(7, "safety_tip", { topic: "prices" }) });
+    assert.equal(reply.status, 200, reply.body);
+    assert.match(reply.body, /"isError":true/);
+    assert.match(reply.body, /topic must be one of: general, seed_phrase, links, approvals, support, qr_codes/);
+  });
+
   it("answers 404 off-path with fixed text", async () => {
     const reply = await send(port, { path: "/somewhere", method: "GET" });
     assert.equal(reply.status, 404);

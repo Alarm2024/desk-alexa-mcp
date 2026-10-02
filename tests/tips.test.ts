@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { isTipTopic, safetyTip, TIP_TOPICS } from "../src/tips.js";
+import { isTipTopic, safetyTip, TIP_TOPICS, toTipTopic } from "../src/tips.js";
 
 describe("safety_tip", () => {
   for (const topic of TIP_TOPICS) {
@@ -22,5 +22,19 @@ describe("safety_tip", () => {
   it("rejects an unknown topic", () => {
     assert.equal(isTipTopic("prices"), false);
     assert.equal(isTipTopic("links"), true);
+  });
+
+  it("maps a typed or spoken topic to its id", () => {
+    assert.equal(toTipTopic("seed phrase"), "seed_phrase");
+    assert.equal(toTipTopic("  Seed-Phrase "), "seed_phrase");
+    assert.equal(toTipTopic("qr code"), "qr_codes");
+    assert.equal(toTipTopic("link"), "links");
+    assert.equal(toTipTopic("approvals"), "approvals");
+  });
+
+  it("does not guess an unknown topic", () => {
+    assert.equal(toTipTopic("prices"), undefined);
+    assert.equal(toTipTopic("seed"), undefined);
+    assert.equal(toTipTopic(""), undefined);
   });
 });
