@@ -1,0 +1,23 @@
+# Render Blueprint for self-hosting Iris for Alexa+.
+# Nothing in this repo deploys by itself. Connect the repo in the Render dashboard to use it.
+services:
+  - type: web
+    name: iris-alexa
+    runtime: node
+    plan: free
+    region: oregon
+    buildCommand: npm ci
+    startCommand: npm start
+    healthCheckPath: /health
+    autoDeployTrigger: commit
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: HOST
+        value: 0.0.0.0
+      - key: SOLANA_RPC_URL
+        value: https://api.mainnet-beta.solana.com
+      # The public hostname Render gives the service, so the Host and Origin checks accept it.
+      # Set it in the dashboard after the first deploy, for example iris-alexa.onrender.com
+      - key: ALLOWED_HOSTS
+        sync: false

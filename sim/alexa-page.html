@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Simulated Alexa+ page — not a real Alexa device</title>
+<style>
+  :root { color-scheme: light dark; font-family: system-ui, sans-serif; }
+  body { max-width: 720px; margin: 2rem auto; padding: 0 1rem; line-height: 1.45; }
+  h1 { font-size: 1.4rem; }
+  textarea { width: 100%; min-height: 5rem; font: inherit; padding: .5rem; box-sizing: border-box; }
+  .row { display: flex; flex-wrap: wrap; gap: .5rem; margin: .75rem 0; }
+  button { font: inherit; padding: .5rem .9rem; cursor: pointer; }
+  #spoken { border-left: 4px solid #888; padding: .75rem 1rem; margin-top: 1rem; min-height: 3rem; white-space: pre-wrap; }
+  #spoken.error { border-left-color: #c0392b; }
+  select { font: inherit; padding: .4rem; }
+  #raw { font-size: .8rem; opacity: .7; white-space: pre-wrap; word-break: break-all; }
+  small { opacity: .7; }
+</style>
+</head>
+<body>
+<p><strong>Simulated Alexa+ page — not a real Alexa device</strong></p>
+<h1>iris-alexa</h1>
+<p><small>A stand-in for an MCP host. It posts the same JSON-RPC an MCP host sends to <code>/mcp</code> and reads the text back. Read-only. Nothing is stored. Do not type a seed phrase.</small></p>
+
+<textarea id="input" placeholder="Paste a message, a link, or a public Solana signature"></textarea>
+<div class="row">
+  <button data-tool="check_scam" data-arg="situation">check_scam</button>
+  <button data-tool="check_link" data-arg="url">check_link</button>
+  <button data-tool="explain_transaction" data-arg="signature">explain_transaction</button>
+  <span>
+    <button data-tool="safety_tip" data-arg="topic">safety_tip</button>
+    <select id="topic" aria-label="safety_tip topic">
+      <option value="general">general</option>
+      <option value="seed_phrase">seed_phrase</option>
+      <option value="links">links</option>
+      <option value="approvals">approvals</option>
+      <option value="support">support</option>
+      <option value="qr_codes">qr_codes</option>
+    </select>
+  </span>
+  <button data-tool="clean_up_steps" data-arg="target">clean_up_steps</button>
+  <label><input type="checkbox" id="speak"> speak it</label>
+</div>
+
+<div id="spoken">…</div>
+<details><summary>raw result</summary><pre id="raw"></pre></details>
+
+<script id="sim-render">
+  // Pure: reply in, words out. tests/sim.test.ts runs this block on its own.
+  function toSpeech(payload) {
+    if (payload.summary) return payload.summary;
+    if (payload.refused) return payload.warning;
+    if (payload.tip) return payload.tip;
+    if (payload.steps) return payload.steps.join(" ");
+    if (payload.found === false) return payload.message;
+    if (payload.found === true) return `${payload.class_label}. ${payload.findings.join(" ")} ${payload.note}`;
+    const lead = payload.verdict === "scam" ? "Stop. This matches a scam pattern." : payload.verdict === "official" ? "That is an official domain." : payload.verdict === "unclear" ? "I can't check that." : "No known pattern.";
+    return [lead, payload.why, ...(payload.next_steps || [])].filter(Boolean).join(" ");
+  }
+
+  // An error is shown as an error. It never goes through toSpeech, so it
+  // cannot come out as "No known pattern." — that is a verdict, and an error
+  // is not one.
+  function renderReply(reply) {
+    if (!reply || reply.error) {
+      const message = reply && reply.error && reply.error.message ? reply.error.message : "the server refused the call.";
+      return { error: true, text: `Error: ${message}` };
+    }
+    const result = reply.result || {};
+    const first = result.content && result.content[0] ? result.content[0].text : "";
+    let payload = null;
+    try { payload = JSON.parse(first); } catch { payload = null; }
+    if (result.isError) {
+      const message = payload && payload.message ? payload.message : first || "the tool returned an error.";
+      return { error: true, text: `Error: ${message}` };
+    }
+    if (!payload) return { error: true, text: "Error: the reply could not be read." };
+    return { error: false, text: toSpeech(payload) };
+  }
+</script>
+<script>
+  const spoken = document.getElementById("spoken");
+  const raw = document.getElementById("raw");
+  const input = document.getElementById("input");
+  const topicSelect = document.getElementById("topic");
+  let id = 1;
+
+  async function rpc(method, params) {
+    const response = await fetch("/mcp", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "accept": "application/json, text/event-stream",
+        "mcp-protocol-version": "2025-11-25",
+      },
+      body: JSON.stringify({ jsonrpc: "2.0", id: id++, method, params }),
+    });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const text = await response.text();
+    // Streamable HTTP may return SSE (event/data) even for a JSON result body.
+    if (/^\s*event:/i.test(text)) {
+      const dataLine = text.split(/\r?\n/).find((line) => line.startsWith("data:"));
+      if (!dataLine) throw new Error("SSE response had no data line");
+      return JSON.parse(dataLine.slice(5).trim());
+    }
+    return JSON.parse(text);
+  }
+
+  function show(rendered) {
+    spoken.textContent = rendered.text;
+    spoken.classList.toggle("error", rendered.error);
+    spoken.setAttribute("role", rendered.error ? "alert" : "status");
+  }
+
+  for (const button of document.querySelectorAll("button[data-tool]")) {
+    button.addEventListener("click", async () => {
+      const tool = button.dataset.tool;
+      const value = input.value.trim();
+      const args = {};
+      // The topic comes from the list of six, never from the text box.
+      if (tool === "safety_tip") args.topic = topicSelect.value;
+      else if (tool === "clean_up_steps") args.target = value || "wallet";
+      else args[button.dataset.arg] = value;
+      show({ error: false, text: "…" });
+      try {
+        const reply = await rpc("tools/call", { name: tool, arguments: args });
+        raw.textContent = JSON.stringify(reply, null, 2);
+        const rendered = renderReply(reply);
+        show(rendered);
+        if (!rendered.error && document.getElementById("speak").checked && "speechSynthesis" in window) {
+          speechSynthesis.cancel();
+          speechSynthesis.speak(new SpeechSynthesisUtterance(rendered.text));
+        }
+      } catch (error) {
+        show({ error: true, text: `Error: ${error && error.message ? error.message : error}` });
+      }
+    });
+  }
+</script>
+</body>
+</html>
